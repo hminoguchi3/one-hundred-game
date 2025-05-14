@@ -1,0 +1,50 @@
+# Dependencies
+node_modules
+
+# Build output
+build
+dist
+
+# IDE and editor specific
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.vim*
+._*
+.DS_Store
+
+# Yarn lock file (if you use Yarn)
+yarn.lock
+
+# Package lock file (if you use npm, but often committed)
+# package-lock.json
+
+# Logs and temporary files
+npm-debug.log*
+yarn-error.log*
+tmp
+temp
+log*
+
+# Environment variables (important to keep secret!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Cache files and folders
+.cache
+cache
+/cypress/cache
+.eslintcache
+.next
+out
+
+# Compiled files (if you're not committing the build output)
+# *.js.map
+# *.d.ts
