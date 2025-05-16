@@ -107,18 +107,31 @@ function AskForRoomId() {
   );
 }
 
+function AskForRoomId() {
+  const [roomId, setRoomId] = useState('');
+  const handleChange = (event) => {
+    setRoomId(event.target.value);
+  };
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Hello Mizuki!
+        </p>
+        <input
+          type="text"
+          id="roomId"
+          value={roomId} // stateとinput要素の値を紐付け
+          onChange={handleChange} // 入力値が変更されたときのイベントハンドラー
+        />
+      </header>
+    </div>
+  );
+}
+
 function App() {
-  return AskForRoomId();
-  // return (
-  //   <div className="App">
-  //     <header className="App-header">
-  //       <img src={logo} className="App-logo" alt="logo" />
-  //       <p>
-  //         Hello Mizuki!
-  //       </p>
-  //     </header>
-  //   </div>
-  // );
+  return SimpleFetch();
 }
 
 export default App; 
