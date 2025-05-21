@@ -39,6 +39,10 @@ exports.joinOrCreateRoom = (req, res) => {
     const cardsArr = JSON.parse(room.cards);
     const statusArr = JSON.parse(room.status);
 
+    if (usersArr.includes(userId)) {
+      res.json({ error: `User ID is already used` });
+    }
+
     // Add the user only if not already present
     if (!usersArr.includes(userId)) {
       usersArr.push(userId);
