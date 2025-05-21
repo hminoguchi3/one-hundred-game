@@ -26,7 +26,8 @@ exports.joinOrCreateRoom = (req, res) => {
       gameType: gameType || 'defaultGame',
       stage:    'lobby',
       users:    JSON.stringify([userId]),   // store array as JSON text
-      cards:    JSON.stringify([null])
+      cards:    JSON.stringify([null]),
+      status:   JSON.stringify([0])
     };
 
     // Persist to the DB
@@ -36,21 +37,24 @@ exports.joinOrCreateRoom = (req, res) => {
     // Parse the stored JSON string to an array
     const usersArr = JSON.parse(room.users);
     const cardsArr = JSON.parse(room.cards);
+    const statusArr = JSON.parse(room.status);
 
     // Add the user only if not already present
     if (!usersArr.includes(userId)) {
       usersArr.push(userId);
       cardsArr.push(null);
+      statusArr.push(0);
 
       // Save the updated list back to the DB (store as JSON string)
       updateRoomUsers({ roomId, 
       users: JSON.stringify(usersArr),
-      cards: JSON.stringify(cardsArr)});
-      
+      cards: JSON.stringify(cardsArr),
+      status: JSON.stringify(statusArr)});
 
       // Keep the in-memory copy in sync so we can send it back
       room.users = JSON.stringify(usersArr);
       room.cards = JSON.stringify(cardsArr);
+      room.status = JSON.stringify(statusArr);
     }
   }
 
@@ -58,6 +62,7 @@ exports.joinOrCreateRoom = (req, res) => {
   res.json({
     ...room,
     users: JSON.parse(room.users),
-    cards: JSON.parse(room.cards)
+    cards: JSON.parse(room.cards),
+    status: JSON.parse(room.status)
   });
 };

@@ -6,13 +6,13 @@ const stmtGet = db.prepare('SELECT * FROM rooms WHERE roomId = ?');
 
 // Prepare an insert (runs only when room doesn’t exist yet)
 const stmtInsert = db.prepare(`
-  INSERT INTO rooms (roomId, gameType, stage, users, cards)
-  VALUES (@roomId, @gameType, @stage, @users, @cards)
+  INSERT INTO rooms (roomId, gameType, stage, users, cards, status)
+  VALUES (@roomId, @gameType, @stage, @users, @cards, @status)
 `);
 
 // Prepare an update of the users list
 const stmtUpdateUsers = db.prepare(`
-  UPDATE rooms SET users = @users, cards = @cards
+  UPDATE rooms SET users = @users, cards = @cards, status = @status
   WHERE roomId = @roomId
 `);
 
@@ -23,5 +23,5 @@ exports.getRoomById = (roomId) => stmtGet.get(roomId);
 exports.createRoom = (roomObj) => stmtInsert.run(roomObj);
 
 // Export a helper that replaces the users array
-exports.updateRoomUsers = ({ roomId, users, cards }) =>
-  stmtUpdateUsers.run({ roomId, users, cards });
+exports.updateRoomUsers = ({ roomId, users, cards , status}) =>
+  stmtUpdateUsers.run({ roomId, users, cards , status});

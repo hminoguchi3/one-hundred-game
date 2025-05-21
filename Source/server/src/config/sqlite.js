@@ -14,7 +14,8 @@ db.exec(`                 -- SQL begins
     gameType TEXT DEFAULT 'defaultGame',
     stage    TEXT DEFAULT 'lobby',   -- lobby → playing → finished
     users    TEXT,                   -- JSON array of user IDs
-    cards    TEXT DEFAULT '[]'       -- JSON array of cards values
+    cards    TEXT DEFAULT '[]',      -- JSON array of cards values
+    status   TEXT DEFAULT '[]'       -- JSON array of status (0 = not ready, 1 = ready)
   )
 `);
 
