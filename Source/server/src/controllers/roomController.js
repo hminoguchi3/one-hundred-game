@@ -25,30 +25,39 @@ exports.joinOrCreateRoom = (req, res) => {
       roomId,
       gameType: gameType || 'defaultGame',
       stage:    'lobby',
-      users:    JSON.stringify([userId])   // store array as JSON text
+      users:    JSON.stringify([userId]),   // store array as JSON text
+      cards:    JSON.stringify([null])
     };
 
     // Persist to the DB
     createRoom(room);
+
   } else {
     // Parse the stored JSON string to an array
     const usersArr = JSON.parse(room.users);
+    const cardsArr = JSON.parse(room.cards);
 
     // Add the user only if not already present
     if (!usersArr.includes(userId)) {
       usersArr.push(userId);
+      cardsArr.push(null);
 
       // Save the updated list back to the DB (store as JSON string)
-      updateRoomUsers({ roomId, users: JSON.stringify(usersArr) });
+      updateRoomUsers({ roomId, 
+      users: JSON.stringify(usersArr),
+      cards: JSON.stringify(cardsArr)});
+      
 
       // Keep the in-memory copy in sync so we can send it back
       room.users = JSON.stringify(usersArr);
+      room.cards = JSON.stringify(cardsArr);
     }
   }
 
   // Respond with the full room object, converting users back to an array
   res.json({
     ...room,
-    users: JSON.parse(room.users)
+    users: JSON.parse(room.users),
+    cards: JSON.parse(room.cards)
   });
 };

@@ -13,7 +13,8 @@ db.exec(`                 -- SQL begins
     roomId   TEXT PRIMARY KEY,       -- Room name / code
     gameType TEXT DEFAULT 'defaultGame',
     stage    TEXT DEFAULT 'lobby',   -- lobby → playing → finished
-    users    TEXT                    -- JSON array of user IDs
+    users    TEXT,                   -- JSON array of user IDs
+    cards    TEXT DEFAULT '[]'       -- JSON array of cards values
   )
 `);
 
