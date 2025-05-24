@@ -1,6 +1,7 @@
 import logo from './kishi.png';
 import './App.css';
 import React, { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
 
 function AccessRoom() {
   const [loading, setLoading] = useState(false);
@@ -22,29 +23,34 @@ function AccessRoom() {
   };
 
   const accessRoomId = () => {
-    setLoading(true); // ローディング開始
-    fetch('http://localhost:5000/api/room', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json', // 送信するデータの形式を指定
-      },
-      body: JSON.stringify(accessRoomRequest), // JavaScriptオブジェクトをJSON文字列に変換して送信
-    })
-      .then(response => {
-        setLoading(false); // ローディング完了
-        if (!response.ok) {
-          const errorMessage = response.text();
-          throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
-        }
-        return response.json(); // レスポンスをJSONとして解析
-      })
-      .then(jsonData => {
-        setcurrentRoomId(jsonData.roomId);
-        setUsersInRoom(jsonData.users)
-      })
-      .catch(error => {
-        setError(error); // エラーをstateに保存
-      });
+    const socket = io('http://localhost:3001');
+    socket.emit('joinRoom', accessRoomRequest);
+    socket.on('userJoined', ({ userId }) =>
+      alert(`${userId} just joined!`)
+    );
+    // setLoading(true); // ローディング開始
+    // fetch('http://localhost:5000/api/room', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json', // 送信するデータの形式を指定
+    //   },
+    //   body: JSON.stringify(accessRoomRequest), // JavaScriptオブジェクトをJSON文字列に変換して送信
+    // })
+    //   .then(response => {
+    //     setLoading(false); // ローディング完了
+    //     if (!response.ok) {
+    //       const errorMessage = response.text();
+    //       throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
+    //     }
+    //     return response.json(); // レスポンスをJSONとして解析
+    //   })
+    //   .then(jsonData => {
+    //     setcurrentRoomId(jsonData.roomId);
+    //     setUsersInRoom(jsonData.users)
+    //   })
+    //   .catch(error => {
+    //     setError(error); // エラーをstateに保存
+    //   });
   };
 
   if (error) {
