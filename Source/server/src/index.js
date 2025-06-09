@@ -57,11 +57,6 @@ io.on('connection', socket => {
     socket.to(roomId).emit('userJoined', { userId });
   });
 
-  /* chat message */
-  socket.on('chat', ({ roomId, userId, text }) => {
-    io.to(roomId).emit('chat', { userId, text });
-  });
-
   /* cleanup */
   socket.on('disconnect', () => {
     console.log('client disconnected', socket.id);

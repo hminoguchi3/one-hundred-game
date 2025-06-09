@@ -70,3 +70,19 @@ exports.joinOrCreateRoom = (req, res) => {
     status: JSON.parse(room.status)
   });
 };
+
+exports.getUsersByRoom = (req, res) => {
+  const { roomId } = req.params;
+
+  // Look up the room
+  const room = getRoomById(roomId);
+  if (!room) {
+    return res.status(404).json({ error: `room "${roomId}" not found` });
+  }
+
+  // Send back the array (parse JSON column)
+  res.json({
+    roomId,
+    users: JSON.parse(room.users)
+  });
+};
