@@ -5,69 +5,85 @@ const {
   updateRoomUsers
 } = require('../models/roomModel');
 
-// Export the main “join or create” handler
 exports.joinOrCreateRoom = (req, res) => {
-  // Extract values sent by the client
-  const { roomId, userId, gameType } = req.body;
-
-  // Validate presence of mandatory fields
-  if (!roomId || !userId) {
+  const { roomId, userId, gameType, topic } = req.body;
+  if (!roomId || !userId)
     return res.status(400).json({ error: 'roomId and userId are required.' });
-  }
 
-  // Try to find an existing room
-  let room = getRoomById(roomId);
+  let room = getRoomById(roomId.trim());
 
-  // If room doesn’t exist, create it
+  /* ── CREATE ───────────────────────────────────────────────────────── */
   if (!room) {
-    // Build the initial room object
     room = {
       roomId,
       gameType: gameType || 'defaultGame',
-      stage:    'lobby',
-      users:    JSON.stringify([userId]),   // store array as JSON text
-      cards:    JSON.stringify([null]),
-      status:   JSON.stringify([0])
-    };
+      stage   : 'lobby',
 
-    // Persist to the DB
+      users   : JSON.stringify([userId]),
+      cards   : JSON.stringify([]),
+      status  : JSON.stringify([]),
+      responses: JSON.stringify(['']),   // one empty response
+      ranks    : JSON.stringify([0]),    // one zero rank
+
+      topic: topic || '',
+      acceptingNewUsers: 1               // true
+    };
     createRoom(room);
 
+  /* ── JOIN EXISTING ────────────────────────────────────────────────── */
   } else {
-    // Parse the stored JSON string to an array
-    const usersArr = JSON.parse(room.users);
-    const cardsArr = JSON.parse(room.cards);
-    const statusArr = JSON.parse(room.status);
+    if (!room.acceptingNewUsers)          // 0 or 1 from DB
+      return res.status(403).json({ error: 'Room is closed to new users.' });
 
-    if (usersArr.includes(userId)) {
-      res.json({ error: `User ID is already used` });
-    }
+    const usersArr     = JSON.parse(room.users);
+    const cardsArr     = JSON.parse(room.cards);
+    const statusArr    = JSON.parse(room.status);
+    const responsesArr = JSON.parse(room.responses);
+    const ranksArr     = JSON.parse(room.ranks);
 
-    // Add the user only if not already present
-    if (!usersArr.includes(userId)) {
-      usersArr.push(userId);
-      cardsArr.push(null);
-      statusArr.push(0);
+    if (usersArr.includes(userId))
+      return res.status(409).json({ error: `userId "${userId}" is already in the room` });
 
-      // Save the updated list back to the DB (store as JSON string)
-      updateRoomUsers({ roomId, 
-      users: JSON.stringify(usersArr),
-      cards: JSON.stringify(cardsArr),
-      status: JSON.stringify(statusArr)});
+    /* keep all per-user arrays the same length */
+    usersArr.push(userId);
+    cardsArr.push(null);
+    statusArr.push(0);
+    responsesArr.push('');
+    ranksArr.push(0);
 
-      // Keep the in-memory copy in sync so we can send it back
-      room.users = JSON.stringify(usersArr);
-      room.cards = JSON.stringify(cardsArr);
-      room.status = JSON.stringify(statusArr);
-    }
+    updateArrays({
+      roomId,
+      users     : JSON.stringify(usersArr),
+      cards     : JSON.stringify(cardsArr),
+      status    : JSON.stringify(statusArr),
+      responses : JSON.stringify(responsesArr),
+      ranks     : JSON.stringify(ranksArr)
+    });
+
+    /* sync local copy so we can send it back */
+    Object.assign(room, {
+      users     : JSON.stringify(usersArr),
+      cards     : JSON.stringify(cardsArr),
+      status    : JSON.stringify(statusArr),
+      responses : JSON.stringify(responsesArr),
+      ranks     : JSON.stringify(ranksArr)
+    });
   }
 
-  // Respond with the full room object, converting users back to an array
+  /* ── RESPONSE ─────────────────────────────────────────────────────── */
   res.json({
-    ...room,
-    users: JSON.parse(room.users),
-    cards: JSON.parse(room.cards),
-    status: JSON.parse(room.status)
+    roomId: room.roomId,
+    gameType: room.gameType,
+    stage: room.stage,
+
+    users:      JSON.parse(room.users),
+    cards:      JSON.parse(room.cards),
+    status:     JSON.parse(room.status),
+    responses:  JSON.parse(room.responses),
+    ranks:      JSON.parse(room.ranks),
+
+    topic: room.topic,
+    acceptingNewUsers: !!room.acceptingNewUsers   // cast to boolean
   });
 };
 

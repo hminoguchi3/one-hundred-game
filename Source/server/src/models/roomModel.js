@@ -4,15 +4,26 @@ const db = require('../config/sqlite');
 // Prepare a reusable statement to fetch a room by ID
 const stmtGet = db.prepare('SELECT * FROM rooms WHERE roomId = ?');
 
-// Prepare an insert (runs only when room doesn’t exist yet)
+/* INSERT now includes the four new columns */
 const stmtInsert = db.prepare(`
-  INSERT INTO rooms (roomId, gameType, stage, users, cards, status)
-  VALUES (@roomId, @gameType, @stage, @users, @cards, @status)
+  INSERT INTO rooms
+    (roomId, gameType, stage,
+     users, cards, status,
+     topic, responses, ranks, acceptingNewUsers)
+  VALUES
+    (@roomId, @gameType, @stage,
+     @users, @cards, @status,
+     @topic, @responses, @ranks, @acceptingNewUsers)
 `);
 
-// Prepare an update of the users list
-const stmtUpdateUsers = db.prepare(`
-  UPDATE rooms SET users = @users, cards = @cards, status = @status
+/* single UPDATE for all array-type columns (users, cards, status, responses, ranks) */
+const stmtUpdateArrays = db.prepare(`
+  UPDATE rooms SET
+    users     = @users,
+    cards     = @cards,
+    status    = @status,
+    responses = @responses,
+    ranks     = @ranks
   WHERE roomId = @roomId
 `);
 
