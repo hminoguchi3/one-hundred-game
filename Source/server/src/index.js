@@ -8,6 +8,9 @@ const cors    = require('cors');
 // Import the room router we just wrote
 const roomRoutes = require('./routes/roomRoutes');
 
+// ❶  ADD THIS LINE just under the other require() calls
+const { getRoomById, setTopic, setUserResponse } = require('./models/roomModel');
+
 // Create the Express application
 const app = express();
 
@@ -55,6 +58,34 @@ io.on('connection', socket => {
     console.log(`${userId} joined ${roomId}`);
     // notify everyone else in the room
     socket.to(roomId).emit('userJoined', { userId });
+  });
+
+  /* set a room topic */
+  socket.on('setTopic', ({ roomId, userId, topic }) => {
+    const room = getRoomById(roomId);
+    if (!room){
+      return socket.emit('error', 'room not found');
+    }
+    if (!JSON.parse(room.users).includes(userId)){
+      return socket.emit('error', 'user not in room');
+    }
+    setTopic({ roomId, topic });            // write to DB
+    io.to(roomId).emit('topicUpdated', { topic });   // broadcast
+  });
+  
+  /* Send a response for each user */
+  socket.on('submitResponse', ({ roomId, userId, response }) => {
+    const room = getRoomById(roomId);
+    if (!room){            
+      return socket.emit('error', 'room not found');
+    }
+    const usersArr = JSON.parse(room.users);
+    const index = usersArr.indexOf(userId);
+    if (index === -1){      
+      return socket.emit('error', 'user not in room');
+    }
+    setUserResponse({ roomId, userIndex: index, response }); // DB update
+    io.to(roomId).emit('responseUpdated', { userId, response });
   });
 
   /* cleanup */
