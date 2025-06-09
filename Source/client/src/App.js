@@ -48,9 +48,31 @@ function AccessRoom() {
       });
     const socket = io('http://localhost:3001');
     socket.emit('joinRoom', accessRoomRequest);
-    socket.on('userJoined', ({ userId }) =>
-      alert(`${userId} just joined!`)
+    socket.on('userJoined', ({ }) =>
+      refreshUsers()
     );
+  };
+
+  const refreshUsers = () => {
+    fetch(`http://localhost:5000/api/room/${currentRoomId}/users`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json', // 送信するデータの形式を指定
+      },
+    })
+      .then(response => {
+        if (!response.ok) {
+          const errorMessage = response.text();
+          throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
+        }
+        return response.json(); // レスポンスをJSONとして解析
+      })
+      .then(jsonData => {
+        setUsersInRoom(jsonData.users)
+      })
+      .catch(error => {
+        setError(error); // エラーをstateに保存
+      });
   };
 
   if (error) {
