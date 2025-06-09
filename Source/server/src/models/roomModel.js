@@ -27,12 +27,40 @@ const stmtUpdateArrays = db.prepare(`
   WHERE roomId = @roomId
 `);
 
-// Export a helper that returns a JS object or undefined
-exports.getRoomById = (roomId) => stmtGet.get(roomId);
+// Return the full row or undefined
+exports.getRoomById = roomId => stmtGet.get(roomId);
 
-// Export a helper that creates a new room document
-exports.createRoom = (roomObj) => stmtInsert.run(roomObj);
+// Insert a brand-new room (called once on creation)
+exports.createRoom = roomObj => stmtInsert.run(roomObj);
 
-// Export a helper that replaces the users array
-exports.updateRoomUsers = ({ roomId, users, cards , status}) =>
-  stmtUpdateUsers.run({ roomId, users, cards , status});
+// Replace *all* array columns at once
+exports.updateArrays = payload => stmtUpdateArrays.run(payload);
+
+// Set/overwrite the single topic string
+exports.setTopic = ({ roomId, topic }) =>
+  stmtUpdateTopic.run({ roomId, topic });
+
+/**
+ * Replace one element of the responses[] array for a given user index.
+ * Returns true on success, false if the room isn’t found.
+ */
+exports.setUserResponse = ({ roomId, userIndex, response }) => {
+  // Fetch the current row
+  const room = stmtGet.get(roomId);
+  if (!room) return false;
+
+  // Parse, mutate, and write back just the responses array
+  const responsesArr = JSON.parse(room.responses);
+  responsesArr[userIndex] = response;
+
+  stmtUpdateArrays.run({
+    roomId,
+    users     : room.users,                    // untouched
+    cards     : room.cards,
+    status    : room.status,
+    responses : JSON.stringify(responsesArr),
+    ranks     : room.ranks
+  });
+
+  return true;
+};
