@@ -12,13 +12,10 @@ function getApiHeaders() {
     };
 }
 
-export async function enterRoomApi(userId, roomId) {
-    const accessRoomRequest = { userId: userId, roomId: roomId };
-
-    const response = await fetch(`${API_BASE_URL}/api/room`, {
-        method: 'POST',
+export async function getUsersInRoomApi(roomId) {
+    const response = await fetch(`${API_BASE_URL}/api/room/${roomId}/users`, {
+        method: 'GET',
         headers: getApiHeaders(),
-        body: JSON.stringify(accessRoomRequest), // JavaScriptオブジェクトをJSON文字列に変換して送信
     });
 
     if (!response.ok) {
@@ -28,10 +25,14 @@ export async function enterRoomApi(userId, roomId) {
     return response.json();
 }
 
-export async function getUsersInRoomApi(roomId) {
-    const response = await fetch(`${API_BASE_URL}/api/room/${roomId}/users`, {
-        method: 'GET',
+// DEPRECATED - using socket instead.
+export async function enterRoomApi(userId, roomId) {
+    const accessRoomRequest = { userId: userId, roomId: roomId };
+
+    const response = await fetch(`${API_BASE_URL}/api/room`, {
+        method: 'POST',
         headers: getApiHeaders(),
+        body: JSON.stringify(accessRoomRequest), // JavaScriptオブジェクトをJSON文字列に変換して送信
     });
 
     if (!response.ok) {

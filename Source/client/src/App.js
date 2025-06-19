@@ -1,7 +1,6 @@
 import logo from './kishi.png';
 import './App.css';
 import React, { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
 import EnterRoomInputForm from './components/EnterRoomInputForm';
 import Lobby from './components/Lobby';
 import ErrorPage from './components/ErrorPage';
@@ -9,9 +8,9 @@ import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
 import ResponseInputForm from './components/ResponseInputForm';
 import { socket } from './utils/socket';
-import { enterRoomApi, getUsersInRoomApi } from './utils/api';
+import { getUsersInRoomApi } from './utils/api';
 
-function AccessRoom() {
+function GameContents() {
   const State = {
     INIT: 'INIT',
     LOBBY: 'LOBBY',
@@ -22,15 +21,16 @@ function AccessRoom() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [state, setState] = useState(State.INIT);
+
+  const [userId, setUserId] = useState('');
+  const [response, setResponse] = useState('');
+  const [card, setCard] = useState(-1);
 
   const [roomId, setRoomId] = useState('');
-  const [userId, setUserId] = useState('');
-  const [usersInRoom, setUsersInRoom] = useState([]);
-  const [topic, setTopic] = useState([]);
-  const [state, setState] = useState(State.INIT);
-  const [response, setResponse] = useState('');
+  const [topic, setTopic] = useState('');
   const [topicGivenUser, setTopicGivenUser] = useState('');
-  const [card, setCard] = useState(-1);
+  const [usersInRoom, setUsersInRoom] = useState([]);
   const [submittedResponses, setSubmittedResponses] = useState([]);
 
   const handleEnterRoomInputChange = (event) => {
@@ -58,22 +58,7 @@ function AccessRoom() {
     socket.on('socketError', (payload) => {
       setError(payload);
     });
-    socket.on('topicUpdated', (payload) => {
-      console.log('topicUpdated: ', payload);
-      if (payload.userId === userId) {
-        setTopicGivenUser('あなた');
-      } else {
-        setTopicGivenUser(payload.userId + 'さん');
-      }
-      setTopic(payload.topic);
-      setCard(payload.card);
-      setState(State.ENTER_RESPONSE);
-      socket.on('responseUpdated', (payload) => {
-        console.log("responseUpdated: ", payload);
-        setSubmittedResponses(payload.responses);
-      });
-    }
-    );
+
     return () => {
       // To be called when AccessRoom obj is no longer used.
       socket.disconnect();
@@ -81,23 +66,44 @@ function AccessRoom() {
   }, []
   )
 
+  // Called when entering a room.
   const accessRoom = async () => {
     setLoading(true); // ローディング開始
     setError(null);
 
     try {
       socket.emit('joinRoom', { userId, roomId });
-      refreshUsers(roomId);
-      setLoading(false);
+
       setState(State.LOBBY);
+      setLoading(false);
+      refreshUsers(roomId);
+
+      // Listen for updates in the current room.
+      // New user joined.
       socket.on('userJoined', (payload) => {
-        console.log(payload);
         refreshUsers(payload.roomId);
       }
       );
+      // Game is started.
       socket.on('startGame', (payload) => {
-        console.log("Start game: " + payload);
-        startGame();
+        setState(State.ENTER_TOPIC);
+      }
+      );
+      // A topic is submitted by one of the users.
+      socket.on('topicSubmitted', (payload) => {
+        console.log('topicSubmitted: ', payload);
+        if (payload.topicGivenUserId === userId) {
+          setTopicGivenUser('あなた');
+        } else {
+          setTopicGivenUser(payload.topicGivenUserId + 'さん');
+        }
+        setTopic(payload.topic);
+        setCard(payload.card);
+        setState(State.ENTER_RESPONSE);
+        socket.on('responseUpdated', (payload) => {
+          console.log("responseUpdated: ", payload);
+          setSubmittedResponses(payload.submittedResponses);
+        });
       }
       );
     } catch (error) {
@@ -105,14 +111,9 @@ function AccessRoom() {
     }
   };
 
-  const submitTopic = async () => {
+  const startGame = async () => {
     socket.emit('startGame', { roomId });
   }
-
-  const startGame = async () => {
-    console.log("Starting game!");
-    setState(State.ENTER_TOPIC);
-  };
 
   const topicSubmitted = async () => {
     socket.emit('setTopic', { userId, roomId, topic });
@@ -120,15 +121,11 @@ function AccessRoom() {
   };
 
   const ResponseSubmitted = async () => {
-    console.log("Response submitted!");
     socket.emit('submitResponse', { userId, roomId, response });
     setState(State.RESPONSE_SUBMITTED);
   };
 
-  // useEffect is called when dependencies (roomId) is updated.
   const refreshUsers = async (roomId) => {
-    console.log("Refresh users!");
-    console.log("Current room id: " + roomId);
     setLoading(true); // ローディング開始
     try {
       const jsonData = await getUsersInRoomApi(roomId);
@@ -159,7 +156,7 @@ function AccessRoom() {
       return <Lobby
         roomId={roomId}
         usersInRoom={usersInRoom}
-        onStart={submitTopic} />;
+        onStart={startGame} />;
     case State.ENTER_TOPIC:
       return <TopicInputForm
         topic={topic}
@@ -170,7 +167,8 @@ function AccessRoom() {
       return <ResponseInputForm
         topic={topic}
         number={card}
-        user={topicGivenUser}
+        topicGivenUser={topicGivenUser}
+        topicSubmitted={State == State.RESPONSE_SUBMITTED}
         submittedResponses={submittedResponses}
         response={response}
         onInputChange={handleResponseInputChange}
@@ -189,7 +187,7 @@ function App() {
         <p>
           Hello Mizuki!
         </p>
-        <AccessRoom />
+        <GameContents />
       </header>
     </div >);
 }

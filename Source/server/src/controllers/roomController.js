@@ -2,11 +2,10 @@
 const {
   getRoomById,
   createRoom,
-  updateArrays,
+  updateUsers,
 } = require('../models/roomModel');
 
 exports.joinOrCreateRoom = (roomId, userId, socketId) => {
-  console.log("joinOrCreateRoom!");
   if (!roomId || !userId || !socketId)
     throw new Error('roomId, userId, and socketId are required.');
 
@@ -43,22 +42,11 @@ exports.joinOrCreateRoom = (roomId, userId, socketId) => {
 
     usersDict[userId] = { socketId };
 
-    updateArrays({
+    updateUsers({
       roomId,
       users: JSON.stringify(usersDict),
     });
-
-    /* sync local copy so we can send it back */
-    Object.assign(room, {
-      users: JSON.stringify(usersDict),
-    });
   }
-
-  /* ── RESPONSE ─────────────────────────────────────────────────────── */
-  return {
-    roomId: room.roomId,
-    acceptingNewUsers: !!room.acceptingNewUsers   // cast to boolean
-  };
 };
 
 exports.assignCards = (roomId) => {
@@ -85,13 +73,9 @@ exports.assignCards = (roomId) => {
     cardNums.delete(cardNum);
   }
 
-  updateArrays({
+  // Update database.
+  updateUsers({
     roomId,
-    users: JSON.stringify(usersDict),
-  });
-
-  /* sync local copy so we can send it back */
-  Object.assign(room, {
     users: JSON.stringify(usersDict),
   });
 };
@@ -120,15 +104,14 @@ exports.setUserResponse = ({ roomId, userId, response }) => {
   // Parse, mutate, and write back just the responses array
   const usersDict = JSON.parse(room.users);
   usersDict[userId].response = response;
-  updateArrays({
+  updateUsers({
     roomId,
     users: JSON.stringify(usersDict),
   });
 };
 
-// Returns responses submitted so far.
+// Returns responses submitted so far in the specified room.
 exports.getSubmittedResponses = (roomId) => {
-  // Look up the room
   const room = getRoomById(roomId);
   if (!room) {
     return res.status(404).json({ error: `room "${roomId}" not found` });

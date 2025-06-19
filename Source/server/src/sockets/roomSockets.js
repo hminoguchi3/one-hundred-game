@@ -23,7 +23,7 @@ function configureSocketIo(app) {
             console.log(`${userId} joined ${roomId}`);
             try {
                 joinOrCreateRoom(roomId, userId, socket.id);
-                // notify everyone else in the room
+                // Notify everyone else in the room
                 socket.to(roomId).emit('userJoined', { userId, roomId });
             } catch (error) {
                 socket.emit('socketError', { message: error.message });
@@ -33,7 +33,7 @@ function configureSocketIo(app) {
         socket.on('startGame', ({ roomId }) => {
             const room = getRoomById(roomId);
             if (!room) {
-                return socket.emit('error', 'room not found');
+                return socket.emit('socketError', { message: 'room not found' });
             }
             assignCards(roomId);
             io.to(roomId).emit('startGame', { roomId });   // broadcast
@@ -43,22 +43,22 @@ function configureSocketIo(app) {
         socket.on('setTopic', ({ roomId, userId, topic }) => {
             const room = getRoomById(roomId);
             if (!room) {
-                return socket.emit('error', 'room not found');
+                return socket.emit('socketError', { message: 'room not found' });
             }
             setTopic({ roomId, topic });            // write to DB
             const usersDict = JSON.parse(room.users);
             // Send cards to all users.
             for (const receiverUserId in usersDict) {
                 const userInfo = usersDict[receiverUserId];
-                io.to(userInfo.socketId).emit('topicUpdated', { userId, topic, card: userInfo.card });
+                io.to(userInfo.socketId).emit('topicSubmitted', { topicGivenUserId: userId, topic, card: userInfo.card });
             }
         });
 
-        /* Send a response for each user */
+        // Called when a user submitted a response.
         socket.on('submitResponse', ({ roomId, userId, response }) => {
             setUserResponse({ roomId, userId, response }); // DB update
             const submittedResponses = getSubmittedResponses(roomId);
-            io.to(roomId).emit('responseUpdated', { responses: submittedResponses });
+            io.to(roomId).emit('responseUpdated', { submittedResponses: submittedResponses });
             // Handle differently when everyone sends responses.
         });
 

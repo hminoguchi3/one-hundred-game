@@ -14,7 +14,7 @@ const stmtInsert = db.prepare(`
      @users, @topic, @acceptingNewUsers)
 `);
 
-const stmtUpdateArrays = db.prepare(`
+const stmtUpdateUsers = db.prepare(`
   UPDATE rooms SET
     users     = @users
   WHERE roomId = @roomId
@@ -33,7 +33,7 @@ exports.getRoomById = roomId => stmtGet.get(roomId);
 exports.createRoom = roomObj => stmtInsert.run(roomObj);
 
 // Replace *all* array columns at once
-exports.updateArrays = payload => stmtUpdateArrays.run(payload);
+exports.updateUsers = payload => stmtUpdateUsers.run(payload);
 
 // Set/overwrite the single topic string
 exports.setTopic = ({ roomId, topic }) =>
