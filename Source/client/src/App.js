@@ -6,7 +6,8 @@ import { io } from 'socket.io-client';
 function AccessRoom() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentRoomId, setcurrentRoomId] = useState('');
+  const [currentRoomId, setCurrentRoomId] = useState('');
+  // const [userName, setUserName] = useState('');
   const [usersInRoom, setUsersInRoom] = useState([]);
 
   const [accessRoomRequest, setaccessRoomRequest] = useState({
@@ -22,58 +23,65 @@ function AccessRoom() {
     }));
   };
 
-  const accessRoomId = () => {
+  const accessRoomId = async () => {
     setLoading(true); // ローディング開始
-    fetch('http://localhost:5000/api/room', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json', // 送信するデータの形式を指定
-      },
-      body: JSON.stringify(accessRoomRequest), // JavaScriptオブジェクトをJSON文字列に変換して送信
-    })
-      .then(response => {
-        setLoading(false); // ローディング完了
-        if (!response.ok) {
-          const errorMessage = response.text();
-          throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
-        }
-        return response.json(); // レスポンスをJSONとして解析
-      })
-      .then(jsonData => {
-        setcurrentRoomId(jsonData.roomId);
-        setUsersInRoom(jsonData.users)
-      })
-      .catch(error => {
-        setError(error); // エラーをstateに保存
+    setError(null);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', // 送信するデータの形式を指定
+        },
+        body: JSON.stringify(accessRoomRequest), // JavaScriptオブジェクトをJSON文字列に変換して送信
       });
-    const socket = io('http://localhost:3001');
-    socket.emit('joinRoom', accessRoomRequest);
-    socket.on('userJoined', ({ }) =>
-      refreshUsers()
-    );
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
+      }
+
+      const jsonData = await response.json();
+      setCurrentRoomId(jsonData.roomId);
+      setUsersInRoom(jsonData.users);
+      setLoading(false);
+      const socket = io('http://localhost:3001');
+      socket.on('userJoined', (payload) => {
+        console.log(payload);
+        refreshUsers(payload.roomId);
+      }
+      );
+      socket.emit('joinRoom', { userId: accessRoomRequest.userId, roomId: jsonData.roomId });
+    } catch (error) {
+      setError(error);
+    }
   };
 
-  const refreshUsers = () => {
-    fetch(`http://localhost:5000/api/room/${currentRoomId}/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // 送信するデータの形式を指定
-      },
-    })
-      .then(response => {
-        if (!response.ok) {
-          const errorMessage = response.text();
-          throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
-        }
-        return response.json(); // レスポンスをJSONとして解析
-      })
-      .then(jsonData => {
-        setUsersInRoom(jsonData.users)
-      })
-      .catch(error => {
-        setError(error); // エラーをstateに保存
+  // useEffect is called when dependencies (currentRoomId) is updated.
+  const refreshUsers = async (roomId) => {
+    console.log("Refresh users!");
+    console.log("Current room id: " + roomId);
+    setLoading(true); // ローディング開始
+    try {
+      const response = await fetch(`http://localhost:5000/api/room/${roomId}/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json', // 送信するデータの形式を指定
+        },
       });
-  };
+
+      if (!response.ok) {
+        const errorMessage = await response.text();  // Try parsing json response
+        throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
+      }
+
+      const jsonData = await response.json();
+      setUsersInRoom(jsonData.users)
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+    }
+  }
 
   if (error) {
     return (

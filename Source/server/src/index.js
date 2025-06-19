@@ -57,7 +57,7 @@ io.on('connection', socket => {
     socket.join(roomId);
     console.log(`${userId} joined ${roomId}`);
     // notify everyone else in the room
-    socket.to(roomId).emit('userJoined', { userId });
+    socket.to(roomId).emit('userJoined', { userId, roomId });
   });
 
   /* set a room topic */

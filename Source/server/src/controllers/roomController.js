@@ -2,7 +2,7 @@
 const {
   getRoomById,
   createRoom,
-  updateArrays
+  updateArrays,
 } = require('../models/roomModel');
 
 exports.joinOrCreateRoom = (req, res) => {
