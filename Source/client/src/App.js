@@ -50,14 +50,26 @@ function AccessRoom() {
     setResponse(value);
   };
 
+  // To be called initially, only once.
+  useEffect(() => {
+    socket.connect();
+    socket.on('socketError', (payload) => {
+      setError(payload);
+    });
+    return () => {
+      // To be called when AccessRoom obj is no longer used.
+      socket.disconnect();
+    }
+  }, []
+  )
+
   const accessRoom = async () => {
     setLoading(true); // ローディング開始
     setError(null);
 
     try {
-      const jsonData = await enterRoomApi(userId, roomId);
-      setRoomId(jsonData.roomId);
-      setUsersInRoom(jsonData.users);
+      socket.emit('joinRoom', { userId, roomId });
+      refreshUsers(roomId);
       setLoading(false);
       setState(State.LOBBY);
       socket.on('userJoined', (payload) => {
@@ -70,7 +82,6 @@ function AccessRoom() {
         startGame();
       }
       );
-      socket.emit('joinRoom', { userId, roomId });
     } catch (error) {
       setError(error);
     }
@@ -119,17 +130,6 @@ function AccessRoom() {
       setError(error);
     }
   }
-
-  // To be called initially, only once.
-  useEffect(() => {
-    console.log("connecting socket");
-    socket.connect();
-    return () => {
-      // To be called when AccessRoom obj is no longer used.
-      socket.disconnect();
-    }
-  }, []
-  )
 
   if (error) {
     return <ErrorPage

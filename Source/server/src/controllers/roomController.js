@@ -5,25 +5,25 @@ const {
   updateArrays,
 } = require('../models/roomModel');
 
-exports.joinOrCreateRoom = (req, res) => {
-  const { roomId, userId, gameType, topic } = req.body;
-  if (!roomId || !userId)
-    return res.status(400).json({ error: 'roomId and userId are required.' });
+exports.joinOrCreateRoom = (roomId, userId, socketId) => {
+  console.log("joinOrCreateRoom!");
+  if (!roomId || !userId || !socketId)
+    throw new Error('roomId, userId, and socketId are required.');
 
   let room = getRoomById(roomId.trim());
 
   /* ── CREATE ───────────────────────────────────────────────────────── */
   if (!room) {
     let userInfoDict = {};
-    userInfoDict[userId] = {};
+    userInfoDict[userId] = { socketId };
     room = {
       roomId,
-      gameType: gameType || 'defaultGame',
+      gameType: 'defaultGame',
       stage: 'lobby',
 
       users: JSON.stringify(userInfoDict),
 
-      topic: topic || '',
+      topic: '',
       acceptingNewUsers: 1               // true
     };
     createRoom(room);
@@ -31,14 +31,14 @@ exports.joinOrCreateRoom = (req, res) => {
     /* ── JOIN EXISTING ────────────────────────────────────────────────── */
   } else {
     if (!room.acceptingNewUsers)          // 0 or 1 from DB
-      return res.status(403).json({ error: 'Room is closed to new users.' });
+      throw new Error('Room is closed to new users.');
 
     const usersDict = JSON.parse(room.users);
 
     if (userId in usersDict)
-      return res.status(409).json({ error: `userId "${userId}" is already in the room` });
+      throw new Error(`userId "${userId}" is already in the room`);
 
-    usersDict[userId] = {};
+    usersDict[userId] = { socketId };
 
     updateArrays({
       roomId,
@@ -52,11 +52,10 @@ exports.joinOrCreateRoom = (req, res) => {
   }
 
   /* ── RESPONSE ─────────────────────────────────────────────────────── */
-  res.json({
+  return {
     roomId: room.roomId,
-    users: Object.keys(JSON.parse(room.users)),
     acceptingNewUsers: !!room.acceptingNewUsers   // cast to boolean
-  });
+  };
 };
 
 // Returns names of the users in a room.
