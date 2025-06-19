@@ -31,6 +31,7 @@ function AccessRoom() {
   const [response, setResponse] = useState('');
   const [topicGivenUser, setTopicGivenUser] = useState('');
   const [card, setCard] = useState(-1);
+  const [submittedResponses, setSubmittedResponses] = useState([]);
 
   const handleEnterRoomInputChange = (event) => {
     const { name, value } = event.target;
@@ -67,6 +68,10 @@ function AccessRoom() {
       setTopic(payload.topic);
       setCard(payload.card);
       setState(State.ENTER_RESPONSE);
+      socket.on('responseUpdated', (payload) => {
+        console.log("responseUpdated: ", payload);
+        setSubmittedResponses(payload.responses);
+      });
     }
     );
     return () => {
@@ -116,6 +121,7 @@ function AccessRoom() {
 
   const ResponseSubmitted = async () => {
     console.log("Response submitted!");
+    socket.emit('submitResponse', { userId, roomId, response });
     setState(State.RESPONSE_SUBMITTED);
   };
 
@@ -165,6 +171,7 @@ function AccessRoom() {
         topic={topic}
         number={card}
         user={topicGivenUser}
+        submittedResponses={submittedResponses}
         response={response}
         onInputChange={handleResponseInputChange}
         onSubmit={ResponseSubmitted} />;

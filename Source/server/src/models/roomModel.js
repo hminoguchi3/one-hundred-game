@@ -38,20 +38,3 @@ exports.updateArrays = payload => stmtUpdateArrays.run(payload);
 // Set/overwrite the single topic string
 exports.setTopic = ({ roomId, topic }) =>
   stmtUpdateTopic.run({ roomId, topic });
-
-exports.setUserResponse = ({ roomId, userId, response }) => {
-  // Fetch the current row
-  const room = stmtGet.get(roomId);
-  if (!room) return false;
-
-  // Parse, mutate, and write back just the responses array
-  const usersDict = JSON.parse(room.users);
-  usersDict[userId].response = response;
-
-  stmtUpdateArrays.run({
-    roomId,
-    users     : room.users,
-  });
-
-  return true;
-};

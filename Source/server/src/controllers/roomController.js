@@ -112,3 +112,36 @@ exports.getUsersByRoom = (req, res) => {
     users: Object.keys(JSON.parse(room.users))
   });
 };
+
+exports.setUserResponse = ({ roomId, userId, response }) => {
+  const room = getRoomById(roomId);
+  if (!room) return false;
+
+  // Parse, mutate, and write back just the responses array
+  const usersDict = JSON.parse(room.users);
+  usersDict[userId].response = response;
+  updateArrays({
+    roomId,
+    users: JSON.stringify(usersDict),
+  });
+};
+
+// Returns responses submitted so far.
+exports.getSubmittedResponses = (roomId) => {
+  // Look up the room
+  const room = getRoomById(roomId);
+  if (!room) {
+    return res.status(404).json({ error: `room "${roomId}" not found` });
+  }
+
+  const usersDict = JSON.parse(room.users);
+  let responses = [];
+
+  for (const userId of Object.keys(usersDict)) {
+    if (usersDict[userId].response) {
+      responses.push({ userId, response: usersDict[userId].response });
+    }
+  }
+
+  return responses;
+};

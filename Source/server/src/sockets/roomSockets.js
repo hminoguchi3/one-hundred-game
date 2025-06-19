@@ -9,9 +9,9 @@ function configureSocketIo(app) {
         }
     });
 
-    const { joinOrCreateRoom, assignCards } = require('../controllers/roomController');
+    const { joinOrCreateRoom, assignCards, setUserResponse, getSubmittedResponses } = require('../controllers/roomController');
 
-    const { getRoomById, setTopic, setUserResponse } = require('../models/roomModel');
+    const { getRoomById, setTopic } = require('../models/roomModel');
 
     // Socket event hook
     io.on('connection', socket => {
@@ -56,12 +56,10 @@ function configureSocketIo(app) {
 
         /* Send a response for each user */
         socket.on('submitResponse', ({ roomId, userId, response }) => {
-            const room = getRoomById(roomId);
-            if (!room) {
-                return socket.emit('error', 'room not found');
-            }
             setUserResponse({ roomId, userId, response }); // DB update
-            io.to(roomId).emit('responseUpdated', { userId, response });
+            const submittedResponses = getSubmittedResponses(roomId);
+            io.to(roomId).emit('responseUpdated', { responses: submittedResponses });
+            // Handle differently when everyone sends responses.
         });
 
         /* cleanup */
