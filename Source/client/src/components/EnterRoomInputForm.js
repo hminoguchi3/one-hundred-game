@@ -1,67 +1,26 @@
-import React, { useState } from 'react';
-import { useRoomManagement } from '../../hooks/useRoomManagement';
-import { useSocketEvents } from '../../hooks/useSocketEvents';
-import UserInputForm from '../UserInputForm/UserInputForm'; // New component
-import RoomDisplay from '../RoomDisplay/RoomDisplay'; // New component
-import './AccessRoom.module.css'; // Or AccessRoom.css if not using CSS Modules
+import '../App.css';
 
-function AccessRoom() {
-  const [accessRoomRequest, setAccessRoomRequest] = useState({
-    roomId: '',
-    userId: ''
-  });
-
-  const {
-    currentRoomId,
-    usersInRoom,
-    loading,
-    error,
-    accessRoom,
-    refreshUsers
-  } = useRoomManagement();
-
-  useSocketEvents(currentRoomId, refreshUsers); // Pass currentRoomId and refreshUsers
-
-  const handleTextInputChange = (event) => {
-    const { name, value } = event.target;
-    setAccessRoomRequest(prevAccessRoomRequest => ({
-      ...prevAccessRoomRequest,
-      [name]: value
-    }));
-  };
-
-  const handleAccessRoom = () => {
-    accessRoom(accessRoomRequest);
-  };
-
-  if (error) {
-    return (
-      <div>
-        <p>データの取得に失敗しました: {error.message}</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div>
-        <p>データをロード中です...</p>
-      </div>
-    );
-  }
-
-  if (currentRoomId) {
-    return <RoomDisplay roomId={currentRoomId} users={usersInRoom} />;
-  }
-
+function EnterRoomInputForm({roomId, userId, onInputChange, onSubmit}) {
   return (
-    <UserInputForm
-      roomId={accessRoomRequest.roomId}
-      userId={accessRoomRequest.userId}
-      onInputChange={handleTextInputChange}
-      onSubmit={handleAccessRoom}
-    />
+    <div>
+      部屋の名前: <input
+        type="text"
+        id="roomId"
+        name="roomId"
+        value={roomId}
+        onChange={onInputChange}
+      /><br />
+      プレイヤーの名前:
+      <input
+        type="text"
+        id="userId"
+        name="userId"
+        value={userId}
+        onChange={onInputChange}
+      /><br />
+      <button onClick={onSubmit}>決定</button>
+    </div>
   );
 }
 
-export default AccessRoom;
+export default EnterRoomInputForm; 

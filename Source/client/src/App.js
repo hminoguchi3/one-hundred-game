@@ -2,20 +2,36 @@ import logo from './kishi.png';
 import './App.css';
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import EnterRoomInputForm from './components/EnterRoomInputForm';
+import Lobby from './components/Lobby';
+import ErrorPage from './components/ErrorPage';
+import LoadingPage from './components/LoadingPage';
+import TopicInputForm from './components/TopicInputForm';
+import ResponseInputForm from './components/ResponseInputForm';
 
 function AccessRoom() {
+  const State = {
+    INIT: 'INIT',
+    LOBBY: 'LOBBY',
+    ENTER_TOPIC: 'ENTER_TOPIC',
+    ENTER_RESPONSE: 'ENTER_RESPONSE',
+    RESPONSE_SUBMITTED: 'RESPONSE_SUBMITTED'
+  };
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentRoomId, setCurrentRoomId] = useState('');
-  // const [userName, setUserName] = useState('');
   const [usersInRoom, setUsersInRoom] = useState([]);
+  const [topic, setTopic] = useState([]);
+  const [state, setState] = useState(State.INIT);
+  const [response, setResponse] = useState('');
 
   const [accessRoomRequest, setaccessRoomRequest] = useState({
     roomId: '',
     userId: ''
   });
 
-  const handleTextInputChange = (event) => {
+  const handleEnterRoomInputChange = (event) => {
     const { name, value } = event.target;
     setaccessRoomRequest(prevaccessRoomRequest => ({
       ...prevaccessRoomRequest, // Keep existing accessRoomRequest properties
@@ -23,7 +39,17 @@ function AccessRoom() {
     }));
   };
 
-  const accessRoomId = async () => {
+  const handleTopicInputChange = (event) => {
+    const { value } = event.target;
+    setTopic(value);
+  };
+
+  const handleResponseInputChange = (event) => {
+    const { value } = event.target;
+    setResponse(value);
+  };
+
+  const accessRoom = async () => {
     setLoading(true); // ローディング開始
     setError(null);
 
@@ -45,6 +71,7 @@ function AccessRoom() {
       setCurrentRoomId(jsonData.roomId);
       setUsersInRoom(jsonData.users);
       setLoading(false);
+      setState(State.LOBBY);
       const socket = io('http://localhost:3001');
       socket.on('userJoined', (payload) => {
         console.log(payload);
@@ -55,6 +82,21 @@ function AccessRoom() {
     } catch (error) {
       setError(error);
     }
+  };
+
+  const askForTopic = async () => {
+    console.log("Starting game!");
+    setState(State.ENTER_TOPIC);
+  };
+
+  const AskForResponse = async () => {
+    console.log("Odai decided!");
+    setState(State.ENTER_RESPONSE);
+  };
+
+  const ResponseSubmitted = async () => {
+    console.log("Response submitted!");
+    setState(State.RESPONSE_SUBMITTED);
   };
 
   // useEffect is called when dependencies (currentRoomId) is updated.
@@ -84,53 +126,43 @@ function AccessRoom() {
   }
 
   if (error) {
-    return (
-      <div>
-        <p>データの取得に失敗しました: {error.message}</p>
-      </div>);
+    return <ErrorPage
+      errorMessage={error.message} />;
   }
 
   if (loading) {
-    return (
-      <div>
-        <p>データをロード中です...</p>
-      </div>);
+    return <LoadingPage />
   }
 
-  if (currentRoomId != '') {
-    return (
-      <div>
-        <pre>ようこそ {currentRoomId} へ</pre>
-        <pre>現在参加しているプレイヤー: </pre>
-        <ul>
-          {usersInRoom.map((str, index) => (
-            <li key={index}>{str}</li>
-          ))}
-        </ul>
-      </div>
-    );
+  switch (state) {
+    case State.INIT:
+      return <EnterRoomInputForm
+        roomId={accessRoomRequest.roomId}
+        userId={accessRoomRequest.userId}
+        onInputChange={handleEnterRoomInputChange}
+        onSubmit={accessRoom} />;
+    case State.LOBBY:
+      return <Lobby
+        roomId={currentRoomId}
+        usersInRoom={usersInRoom}
+        onStart={askForTopic} />;
+    case State.ENTER_TOPIC:
+      return <TopicInputForm
+        topic={topic}
+        onInputChange={handleTopicInputChange}
+        onSubmit={AskForResponse} />;
+    case State.ENTER_RESPONSE:
+    case State.RESPONSE_SUBMITTED:
+      return <ResponseInputForm
+        topic={topic}
+        number="2"
+        response={response}
+        onInputChange={handleResponseInputChange}
+        onSubmit={ResponseSubmitted} />;
+    default:
+      return <ErrorPage
+        errorMessage={"undefined state"} />;
   }
-
-  return (
-    <div>
-      部屋の名前: <input
-        type="text"
-        id="roomId"
-        name="roomId"
-        value={accessRoomRequest.roomId}
-        onChange={handleTextInputChange}
-      /><br />
-      プレイヤーの名前:
-      <input
-        type="text"
-        id="userId"
-        name="userId"
-        value={accessRoomRequest.userId}
-        onChange={handleTextInputChange}
-      /><br />
-      <button onClick={accessRoomId}>決定</button>
-    </div>
-  );
 }
 
 function App() {
