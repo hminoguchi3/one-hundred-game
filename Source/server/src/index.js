@@ -60,6 +60,14 @@ io.on('connection', socket => {
     socket.to(roomId).emit('userJoined', { userId, roomId });
   });
 
+  socket.on('startGame', ({ roomId }) => {
+    const room = getRoomById(roomId);
+    if (!room){
+      return socket.emit('error', 'room not found');
+    }
+    io.to(roomId).emit('startGame', { roomId });   // broadcast
+  });
+
   /* set a room topic */
   socket.on('setTopic', ({ roomId, userId, topic }) => {
     const room = getRoomById(roomId);
@@ -70,7 +78,7 @@ io.on('connection', socket => {
       return socket.emit('error', 'user not in room');
     }
     setTopic({ roomId, topic });            // write to DB
-    io.to(roomId).emit('topicUpdated', { topic });   // broadcast
+    io.to(roomId).emit('topicUpdated', { userId, topic });   // broadcast
   });
   
   /* Send a response for each user */

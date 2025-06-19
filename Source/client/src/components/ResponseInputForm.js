@@ -1,9 +1,9 @@
 import '../App.css';
 
-function ResponseInputForm({ topic, number, response, onInputChange, onSubmit }) {
+function ResponseInputForm({ topic, number, user, response, onInputChange, onSubmit }) {
     return (
         <div>
-            お題: {topic}<br />
+            {user}さんのお題: {topic}<br />
             あなたの数字は{number}です<br /><br />
             <input
                 type="text"

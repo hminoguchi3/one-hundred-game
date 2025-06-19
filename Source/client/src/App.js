@@ -20,11 +20,13 @@ function AccessRoom() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const [currentRoomId, setCurrentRoomId] = useState('');
   const [usersInRoom, setUsersInRoom] = useState([]);
   const [topic, setTopic] = useState([]);
   const [state, setState] = useState(State.INIT);
   const [response, setResponse] = useState('');
+  const [topicGivenUser, setTopicGivenUser] = useState('');
 
   const [accessRoomRequest, setaccessRoomRequest] = useState({
     roomId: '',
@@ -78,19 +80,38 @@ function AccessRoom() {
         refreshUsers(payload.roomId);
       }
       );
+      socket.on('startGame', (payload) => {
+        console.log("Start game: " + payload);
+        setState(State.ENTER_TOPIC);
+      }
+      );
       socket.emit('joinRoom', { userId: accessRoomRequest.userId, roomId: jsonData.roomId });
     } catch (error) {
       setError(error);
     }
   };
 
-  const askForTopic = async () => {
+  const startGame = async () => {
     console.log("Starting game!");
     setState(State.ENTER_TOPIC);
+    const socket = io('http://localhost:3001');
+    socket.on('topicUpdated', (payload) => {
+      console.log('topicUpdated: ' + payload);
+      if (payload.userId === accessRoomRequest.userId) {
+        setTopicGivenUser('あなた');
+      } else {
+        setTopicGivenUser(payload.userId);
+      }
+      setTopic(payload.topic);
+      setState(State.ENTER_RESPONSE);
+    }
+    );
+    socket.emit('startGame', { roomId: currentRoomId });
   };
 
-  const AskForResponse = async () => {
-    console.log("Odai decided!");
+  const topicSubmitted = async () => {
+    const socket = io('http://localhost:3001');
+    socket.emit('setTopic', { userId: accessRoomRequest.userId, roomId: currentRoomId, topic: topic });
     setState(State.ENTER_RESPONSE);
   };
 
@@ -145,17 +166,18 @@ function AccessRoom() {
       return <Lobby
         roomId={currentRoomId}
         usersInRoom={usersInRoom}
-        onStart={askForTopic} />;
+        onStart={startGame} />;
     case State.ENTER_TOPIC:
       return <TopicInputForm
         topic={topic}
         onInputChange={handleTopicInputChange}
-        onSubmit={AskForResponse} />;
+        onSubmit={topicSubmitted} />;
     case State.ENTER_RESPONSE:
     case State.RESPONSE_SUBMITTED:
       return <ResponseInputForm
         topic={topic}
         number="2"
+        user={topicGivenUser}
         response={response}
         onInputChange={handleResponseInputChange}
         onSubmit={ResponseSubmitted} />;
