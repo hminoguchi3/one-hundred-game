@@ -8,7 +8,7 @@ import ErrorPage from './components/ErrorPage';
 import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
 import ResponseInputForm from './components/ResponseInputForm';
-import { SOCKET_SERVER_URL } from './utils/constants';
+import { socket } from './utils/socket';
 import { enterRoomApi, getUsersInRoomApi } from './utils/api';
 
 function AccessRoom() {
@@ -60,7 +60,6 @@ function AccessRoom() {
       setUsersInRoom(jsonData.users);
       setLoading(false);
       setState(State.LOBBY);
-      const socket = io(SOCKET_SERVER_URL);
       socket.on('userJoined', (payload) => {
         console.log(payload);
         refreshUsers(payload.roomId);
@@ -77,10 +76,13 @@ function AccessRoom() {
     }
   };
 
+  const submitTopic = async () => {
+    socket.emit('startGame', { roomId });
+  }
+
   const startGame = async () => {
     console.log("Starting game!");
     setState(State.ENTER_TOPIC);
-    const socket = io(SOCKET_SERVER_URL);
     socket.on('topicUpdated', (payload) => {
       console.log('topicUpdated: ' + payload);
       if (payload.userId === userId) {
@@ -92,11 +94,9 @@ function AccessRoom() {
       setState(State.ENTER_RESPONSE);
     }
     );
-    socket.emit('startGame', { roomId });
   };
 
   const topicSubmitted = async () => {
-    const socket = io(SOCKET_SERVER_URL);
     socket.emit('setTopic', { userId, roomId, topic });
     setState(State.ENTER_RESPONSE);
   };
@@ -120,6 +120,13 @@ function AccessRoom() {
     }
   }
 
+  // To be called initially, only once.
+  useEffect(() => {
+    console.log("connecting socket");
+    socket.connect();
+  }, []
+  )
+
   if (error) {
     return <ErrorPage
       errorMessage={error.message} />;
@@ -140,7 +147,7 @@ function AccessRoom() {
       return <Lobby
         roomId={roomId}
         usersInRoom={usersInRoom}
-        onStart={startGame} />;
+        onStart={submitTopic} />;
     case State.ENTER_TOPIC:
       return <TopicInputForm
         topic={topic}
