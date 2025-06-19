@@ -124,6 +124,10 @@ function AccessRoom() {
   useEffect(() => {
     console.log("connecting socket");
     socket.connect();
+    return () => {
+      // To be called when AccessRoom obj is no longer used.
+      socket.disconnect();
+    }
   }, []
   )
 
