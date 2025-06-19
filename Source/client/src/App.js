@@ -8,6 +8,8 @@ import ErrorPage from './components/ErrorPage';
 import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
 import ResponseInputForm from './components/ResponseInputForm';
+import { SOCKET_SERVER_URL } from './utils/constants';
+import { enterRoomApi, getUsersInRoomApi } from './utils/api';
 
 function AccessRoom() {
   const State = {
@@ -21,24 +23,21 @@ function AccessRoom() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [currentRoomId, setCurrentRoomId] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const [userId, setUserId] = useState('');
   const [usersInRoom, setUsersInRoom] = useState([]);
   const [topic, setTopic] = useState([]);
   const [state, setState] = useState(State.INIT);
   const [response, setResponse] = useState('');
   const [topicGivenUser, setTopicGivenUser] = useState('');
 
-  const [accessRoomRequest, setaccessRoomRequest] = useState({
-    roomId: '',
-    userId: ''
-  });
-
   const handleEnterRoomInputChange = (event) => {
     const { name, value } = event.target;
-    setaccessRoomRequest(prevaccessRoomRequest => ({
-      ...prevaccessRoomRequest, // Keep existing accessRoomRequest properties
-      [name]: value     // Update the specific property that changed
-    }));
+    if (name == "userId") {
+      setUserId(value);
+    } else if (name == "roomId") {
+      setRoomId(value);
+    }
   };
 
   const handleTopicInputChange = (event) => {
@@ -56,25 +55,12 @@ function AccessRoom() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:5000/api/room', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json', // 送信するデータの形式を指定
-        },
-        body: JSON.stringify(accessRoomRequest), // JavaScriptオブジェクトをJSON文字列に変換して送信
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
-      }
-
-      const jsonData = await response.json();
-      setCurrentRoomId(jsonData.roomId);
+      const jsonData = await enterRoomApi(userId, roomId);
+      setRoomId(jsonData.roomId);
       setUsersInRoom(jsonData.users);
       setLoading(false);
       setState(State.LOBBY);
-      const socket = io('http://localhost:3001');
+      const socket = io(SOCKET_SERVER_URL);
       socket.on('userJoined', (payload) => {
         console.log(payload);
         refreshUsers(payload.roomId);
@@ -85,7 +71,7 @@ function AccessRoom() {
         setState(State.ENTER_TOPIC);
       }
       );
-      socket.emit('joinRoom', { userId: accessRoomRequest.userId, roomId: jsonData.roomId });
+      socket.emit('joinRoom', { userId, roomId });
     } catch (error) {
       setError(error);
     }
@@ -94,10 +80,10 @@ function AccessRoom() {
   const startGame = async () => {
     console.log("Starting game!");
     setState(State.ENTER_TOPIC);
-    const socket = io('http://localhost:3001');
+    const socket = io(SOCKET_SERVER_URL);
     socket.on('topicUpdated', (payload) => {
       console.log('topicUpdated: ' + payload);
-      if (payload.userId === accessRoomRequest.userId) {
+      if (payload.userId === userId) {
         setTopicGivenUser('あなた');
       } else {
         setTopicGivenUser(payload.userId);
@@ -106,12 +92,12 @@ function AccessRoom() {
       setState(State.ENTER_RESPONSE);
     }
     );
-    socket.emit('startGame', { roomId: currentRoomId });
+    socket.emit('startGame', { roomId });
   };
 
   const topicSubmitted = async () => {
-    const socket = io('http://localhost:3001');
-    socket.emit('setTopic', { userId: accessRoomRequest.userId, roomId: currentRoomId, topic: topic });
+    const socket = io(SOCKET_SERVER_URL);
+    socket.emit('setTopic', { userId, roomId, topic });
     setState(State.ENTER_RESPONSE);
   };
 
@@ -120,25 +106,13 @@ function AccessRoom() {
     setState(State.RESPONSE_SUBMITTED);
   };
 
-  // useEffect is called when dependencies (currentRoomId) is updated.
+  // useEffect is called when dependencies (roomId) is updated.
   const refreshUsers = async (roomId) => {
     console.log("Refresh users!");
     console.log("Current room id: " + roomId);
     setLoading(true); // ローディング開始
     try {
-      const response = await fetch(`http://localhost:5000/api/room/${roomId}/users`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json', // 送信するデータの形式を指定
-        },
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();  // Try parsing json response
-        throw new Error(`HTTPエラーです！ステータス: ${response.status}, メッセージ: ${errorMessage}`);
-      }
-
-      const jsonData = await response.json();
+      const jsonData = await getUsersInRoomApi(roomId);
       setUsersInRoom(jsonData.users)
       setLoading(false);
     } catch (error) {
@@ -158,13 +132,13 @@ function AccessRoom() {
   switch (state) {
     case State.INIT:
       return <EnterRoomInputForm
-        roomId={accessRoomRequest.roomId}
-        userId={accessRoomRequest.userId}
+        roomId={roomId}
+        userId={userId}
         onInputChange={handleEnterRoomInputChange}
         onSubmit={accessRoom} />;
     case State.LOBBY:
       return <Lobby
-        roomId={currentRoomId}
+        roomId={roomId}
         usersInRoom={usersInRoom}
         onStart={startGame} />;
     case State.ENTER_TOPIC:
