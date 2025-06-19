@@ -68,7 +68,7 @@ function AccessRoom() {
       );
       socket.on('startGame', (payload) => {
         console.log("Start game: " + payload);
-        setState(State.ENTER_TOPIC);
+        startGame();
       }
       );
       socket.emit('joinRoom', { userId, roomId });
@@ -86,7 +86,7 @@ function AccessRoom() {
       if (payload.userId === userId) {
         setTopicGivenUser('あなた');
       } else {
-        setTopicGivenUser(payload.userId);
+        setTopicGivenUser(payload.userId + 'さん');
       }
       setTopic(payload.topic);
       setState(State.ENTER_RESPONSE);

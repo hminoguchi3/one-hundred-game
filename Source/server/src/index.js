@@ -74,9 +74,6 @@ io.on('connection', socket => {
     if (!room){
       return socket.emit('error', 'room not found');
     }
-    if (!JSON.parse(room.users).includes(userId)){
-      return socket.emit('error', 'user not in room');
-    }
     setTopic({ roomId, topic });            // write to DB
     io.to(roomId).emit('topicUpdated', { userId, topic });   // broadcast
   });
@@ -87,12 +84,7 @@ io.on('connection', socket => {
     if (!room){            
       return socket.emit('error', 'room not found');
     }
-    const usersArr = JSON.parse(room.users);
-    const index = usersArr.indexOf(userId);
-    if (index === -1){      
-      return socket.emit('error', 'user not in room');
-    }
-    setUserResponse({ roomId, userIndex: index, response }); // DB update
+    setUserResponse({ roomId, userId, response }); // DB update
     io.to(roomId).emit('responseUpdated', { userId, response });
   });
 

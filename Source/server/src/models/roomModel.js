@@ -8,22 +8,21 @@ const stmtGet = db.prepare('SELECT * FROM rooms WHERE roomId = ?');
 const stmtInsert = db.prepare(`
   INSERT INTO rooms
     (roomId, gameType, stage,
-     users, cards, status,
-     topic, responses, ranks, acceptingNewUsers)
+     users, topic, acceptingNewUsers)
   VALUES
     (@roomId, @gameType, @stage,
-     @users, @cards, @status,
-     @topic, @responses, @ranks, @acceptingNewUsers)
+     @users, @topic, @acceptingNewUsers)
 `);
 
-/* single UPDATE for all array-type columns (users, cards, status, responses, ranks) */
 const stmtUpdateArrays = db.prepare(`
   UPDATE rooms SET
-    users     = @users,
-    cards     = @cards,
-    status    = @status,
-    responses = @responses,
-    ranks     = @ranks
+    users     = @users
+  WHERE roomId = @roomId
+`);
+
+const stmtUpdateTopic = db.prepare(`
+  UPDATE rooms SET
+    topic     = @topic
   WHERE roomId = @roomId
 `);
 
@@ -40,47 +39,18 @@ exports.updateArrays = payload => stmtUpdateArrays.run(payload);
 exports.setTopic = ({ roomId, topic }) =>
   stmtUpdateTopic.run({ roomId, topic });
 
-// exports.setUserNumber = ({ roomId, userIndex, number }) => {
-//   // Fetch the current row
-//   const room = stmtGet.get(roomId);
-//   if (!room) return false;
-
-//   // Parse, mutate, and write back just the responses array
-//   const responsesArr = JSON.parse(room.responses);
-//   responsesArr[userIndex].number = response;
-
-//   stmtUpdateArrays.run({
-//     roomId,
-//     users     : room.users,                    // untouched
-//     cards     : room.cards,
-//     status    : room.status,
-//     responses : JSON.stringify(responsesArr),
-//     ranks     : room.ranks
-//   });
-
-//   return true;
-// };
-
-/**
- * Replace one element of the responses[] array for a given user index.
- * Returns true on success, false if the room isn’t found.
- */
-exports.setUserResponse = ({ roomId, userIndex, response }) => {
+exports.setUserResponse = ({ roomId, userId, response }) => {
   // Fetch the current row
   const room = stmtGet.get(roomId);
   if (!room) return false;
 
   // Parse, mutate, and write back just the responses array
-  const responsesArr = JSON.parse(room.responses);
-  responsesArr[userIndex] = response;
+  const usersDict = JSON.parse(room.users);
+  usersDict[userId].response = response;
 
   stmtUpdateArrays.run({
     roomId,
-    users     : room.users,                    // untouched
-    cards     : room.cards,
-    status    : room.status,
-    responses : JSON.stringify(responsesArr),
-    ranks     : room.ranks
+    users     : room.users,
   });
 
   return true;

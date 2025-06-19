@@ -14,79 +14,52 @@ exports.joinOrCreateRoom = (req, res) => {
 
   /* ── CREATE ───────────────────────────────────────────────────────── */
   if (!room) {
+    let userInfoDict = {};
+    userInfoDict[userId] = {};
     room = {
       roomId,
       gameType: gameType || 'defaultGame',
-      stage   : 'lobby',
+      stage: 'lobby',
 
-      users   : JSON.stringify([userId]),
-      cards   : JSON.stringify([]),
-      status  : JSON.stringify([]),
-      responses: JSON.stringify(['']),   // one empty response
-      ranks    : JSON.stringify([0]),    // one zero rank
+      users: JSON.stringify(userInfoDict),
 
       topic: topic || '',
       acceptingNewUsers: 1               // true
     };
     createRoom(room);
 
-  /* ── JOIN EXISTING ────────────────────────────────────────────────── */
+    /* ── JOIN EXISTING ────────────────────────────────────────────────── */
   } else {
     if (!room.acceptingNewUsers)          // 0 or 1 from DB
       return res.status(403).json({ error: 'Room is closed to new users.' });
 
-    const usersArr     = JSON.parse(room.users);
-    const cardsArr     = JSON.parse(room.cards);
-    const statusArr    = JSON.parse(room.status);
-    const responsesArr = JSON.parse(room.responses);
-    const ranksArr     = JSON.parse(room.ranks);
+    const usersDict = JSON.parse(room.users);
 
-    if (usersArr.includes(userId))
+    if (userId in usersDict)
       return res.status(409).json({ error: `userId "${userId}" is already in the room` });
 
-    /* keep all per-user arrays the same length */
-    usersArr.push(userId);
-    cardsArr.push(null);
-    statusArr.push(0);
-    responsesArr.push('');
-    ranksArr.push(0);
+    usersDict[userId] = {};
 
     updateArrays({
       roomId,
-      users     : JSON.stringify(usersArr),
-      cards     : JSON.stringify(cardsArr),
-      status    : JSON.stringify(statusArr),
-      responses : JSON.stringify(responsesArr),
-      ranks     : JSON.stringify(ranksArr)
+      users: JSON.stringify(usersDict),
     });
 
     /* sync local copy so we can send it back */
     Object.assign(room, {
-      users     : JSON.stringify(usersArr),
-      cards     : JSON.stringify(cardsArr),
-      status    : JSON.stringify(statusArr),
-      responses : JSON.stringify(responsesArr),
-      ranks     : JSON.stringify(ranksArr)
+      users: JSON.stringify(usersDict),
     });
   }
 
   /* ── RESPONSE ─────────────────────────────────────────────────────── */
   res.json({
     roomId: room.roomId,
-    gameType: room.gameType,
-    stage: room.stage,
-
-    users:      JSON.parse(room.users),
-    cards:      JSON.parse(room.cards),
-    status:     JSON.parse(room.status),
-    responses:  JSON.parse(room.responses),
-    ranks:      JSON.parse(room.ranks),
-
-    topic: room.topic,
+    users: Object.keys(JSON.parse(room.users)),
     acceptingNewUsers: !!room.acceptingNewUsers   // cast to boolean
   });
 };
 
+// Returns names of the users in a room.
 exports.getUsersByRoom = (req, res) => {
   const { roomId } = req.params;
 
@@ -99,6 +72,6 @@ exports.getUsersByRoom = (req, res) => {
   // Send back the array (parse JSON column)
   res.json({
     roomId,
-    users: JSON.parse(room.users)
+    users: Object.keys(JSON.parse(room.users))
   });
 };
