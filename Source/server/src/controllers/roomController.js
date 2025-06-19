@@ -33,6 +33,9 @@ exports.joinOrCreateRoom = (roomId, userId, socketId) => {
     if (!room.acceptingNewUsers)          // 0 or 1 from DB
       throw new Error('Room is closed to new users.');
 
+    if (room.users.size > 10)
+      throw new Error(`Too many users in room! Cannot join.`);
+
     const usersDict = JSON.parse(room.users);
 
     if (userId in usersDict)
@@ -56,6 +59,41 @@ exports.joinOrCreateRoom = (roomId, userId, socketId) => {
     roomId: room.roomId,
     acceptingNewUsers: !!room.acceptingNewUsers   // cast to boolean
   };
+};
+
+exports.assignCards = (roomId) => {
+  if (!roomId)
+    throw new Error('roomId is required.');
+
+  let room = getRoomById(roomId.trim());
+  if (!room)
+    throw new Error(`requested room ${roomId} does not exist.`);
+
+  let usersDict = JSON.parse(room.users);
+
+  // Generate N distinct random numbers between 1 and 100, inclusive.
+  let cardNums = new Set();
+  while (cardNums.size < Object.keys(usersDict).length) {
+    const randomNumber = Math.floor(Math.random() * 100) + 1;
+    cardNums.add(randomNumber);
+  }
+
+  // Assign number to each user.
+  for (const userId of Object.keys(usersDict)) {
+    const cardNum = cardNums.values().next().value;
+    usersDict[userId].card = cardNum;
+    cardNums.delete(cardNum);
+  }
+
+  updateArrays({
+    roomId,
+    users: JSON.stringify(usersDict),
+  });
+
+  /* sync local copy so we can send it back */
+  Object.assign(room, {
+    users: JSON.stringify(usersDict),
+  });
 };
 
 // Returns names of the users in a room.

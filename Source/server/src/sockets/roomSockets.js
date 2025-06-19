@@ -9,7 +9,7 @@ function configureSocketIo(app) {
         }
     });
 
-    const { joinOrCreateRoom } = require('../controllers/roomController');
+    const { joinOrCreateRoom, assignCards } = require('../controllers/roomController');
 
     const { getRoomById, setTopic, setUserResponse } = require('../models/roomModel');
 
@@ -35,6 +35,7 @@ function configureSocketIo(app) {
             if (!room) {
                 return socket.emit('error', 'room not found');
             }
+            assignCards(roomId);
             io.to(roomId).emit('startGame', { roomId });   // broadcast
         });
 
@@ -45,7 +46,12 @@ function configureSocketIo(app) {
                 return socket.emit('error', 'room not found');
             }
             setTopic({ roomId, topic });            // write to DB
-            io.to(roomId).emit('topicUpdated', { userId, topic });   // broadcast
+            const usersDict = JSON.parse(room.users);
+            // Send cards to all users.
+            for (const receiverUserId in usersDict) {
+                const userInfo = usersDict[receiverUserId];
+                io.to(userInfo.socketId).emit('topicUpdated', { userId, topic, card: userInfo.card });
+            }
         });
 
         /* Send a response for each user */

@@ -30,6 +30,7 @@ function AccessRoom() {
   const [state, setState] = useState(State.INIT);
   const [response, setResponse] = useState('');
   const [topicGivenUser, setTopicGivenUser] = useState('');
+  const [card, setCard] = useState(-1);
 
   const handleEnterRoomInputChange = (event) => {
     const { name, value } = event.target;
@@ -56,6 +57,18 @@ function AccessRoom() {
     socket.on('socketError', (payload) => {
       setError(payload);
     });
+    socket.on('topicUpdated', (payload) => {
+      console.log('topicUpdated: ', payload);
+      if (payload.userId === userId) {
+        setTopicGivenUser('あなた');
+      } else {
+        setTopicGivenUser(payload.userId + 'さん');
+      }
+      setTopic(payload.topic);
+      setCard(payload.card);
+      setState(State.ENTER_RESPONSE);
+    }
+    );
     return () => {
       // To be called when AccessRoom obj is no longer used.
       socket.disconnect();
@@ -94,17 +107,6 @@ function AccessRoom() {
   const startGame = async () => {
     console.log("Starting game!");
     setState(State.ENTER_TOPIC);
-    socket.on('topicUpdated', (payload) => {
-      console.log('topicUpdated: ' + payload);
-      if (payload.userId === userId) {
-        setTopicGivenUser('あなた');
-      } else {
-        setTopicGivenUser(payload.userId + 'さん');
-      }
-      setTopic(payload.topic);
-      setState(State.ENTER_RESPONSE);
-    }
-    );
   };
 
   const topicSubmitted = async () => {
@@ -161,7 +163,7 @@ function AccessRoom() {
     case State.RESPONSE_SUBMITTED:
       return <ResponseInputForm
         topic={topic}
-        number="2"
+        number={card}
         user={topicGivenUser}
         response={response}
         onInputChange={handleResponseInputChange}
