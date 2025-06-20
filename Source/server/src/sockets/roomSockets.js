@@ -9,7 +9,7 @@ function configureSocketIo(app) {
         }
     });
 
-    const { joinOrCreateRoom, assignCards, setUserResponse, getSubmittedResponses } = require('../controllers/roomController');
+    const { joinOrCreateRoom, assignCards, setUserResponse, getSubmittedResponses, getAllCardsAndResponses } = require('../controllers/roomController');
 
     const { getRoomById, setTopic } = require('../models/roomModel');
 
@@ -57,9 +57,16 @@ function configureSocketIo(app) {
         // Called when a user submitted a response.
         socket.on('submitResponse', ({ roomId, userId, response }) => {
             setUserResponse({ roomId, userId, response }); // DB update
-            const submittedResponses = getSubmittedResponses(roomId);
-            io.to(roomId).emit('responseUpdated', { submittedResponses: submittedResponses });
-            // Handle differently when everyone sends responses.
+            const { allResponseSubmitted, responses } = getSubmittedResponses(roomId);
+            io.to(roomId).emit('responseUpdated', { allResponseSubmitted, responses });
+        });
+
+        socket.on('submitRanks', ({ roomId }) => {
+            io.to(roomId).emit('ranksSubmitted', { cardsAndResponses: getAllCardsAndResponses(roomId) });
+        });
+
+        socket.on('playAgain', ({ roomId }) => {
+            io.to(roomId).emit('playAgain', {});
         });
 
         /* cleanup */

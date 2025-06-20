@@ -7,6 +7,8 @@ import ErrorPage from './components/ErrorPage';
 import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
 import ResponseInputForm from './components/ResponseInputForm';
+import DecideRank from './components/DecideRank';
+import ShowResult from './components/ShowResult';
 import { socket } from './utils/socket';
 import { getUsersInRoomApi } from './utils/api';
 
@@ -16,7 +18,9 @@ function GameContents() {
     LOBBY: 'LOBBY',
     ENTER_TOPIC: 'ENTER_TOPIC',
     ENTER_RESPONSE: 'ENTER_RESPONSE',
-    RESPONSE_SUBMITTED: 'RESPONSE_SUBMITTED'
+    RESPONSE_SUBMITTED: 'RESPONSE_SUBMITTED',
+    DECIDE_RANK: 'DECIDE_RANK',
+    SHOW_RESULT: 'SHOW_RESULT'
   };
 
   const [loading, setLoading] = useState(false);
@@ -100,12 +104,26 @@ function GameContents() {
         setTopic(payload.topic);
         setCard(payload.card);
         setState(State.ENTER_RESPONSE);
-        socket.on('responseUpdated', (payload) => {
-          console.log("responseUpdated: ", payload);
-          setSubmittedResponses(payload.submittedResponses);
-        });
       }
       );
+      // A response is submitted by one of the users.
+      socket.on('responseUpdated', (payload) => {
+        console.log("responseUpdated: ", payload);
+        setSubmittedResponses(payload.responses);
+        if (payload.allResponseSubmitted) {
+          setState(State.DECIDE_RANK);
+        }
+      });
+      // Rank is finalized by one of the users.
+      socket.on('ranksSubmitted', (payload) => {
+        console.log("ranksSubmitted: ", payload);
+        setSubmittedResponses(payload.cardsAndResponses);
+        setState(State.SHOW_RESULT);
+      });
+      // Rank is finalized by one of the users.
+      socket.on('playAgain', (payload) => {
+        setState(State.LOBBY);
+      });
     } catch (error) {
       setError(error);
     }
@@ -120,9 +138,17 @@ function GameContents() {
     setState(State.ENTER_RESPONSE);
   };
 
-  const ResponseSubmitted = async () => {
+  const submitResponse = async () => {
     socket.emit('submitResponse', { userId, roomId, response });
     setState(State.RESPONSE_SUBMITTED);
+  };
+
+  const submitRanks = async () => {
+    socket.emit('submitRanks', { roomId });
+  };
+
+  const playAgain = async () => {
+    socket.emit('playAgain', { roomId });
   };
 
   const refreshUsers = async (roomId) => {
@@ -168,11 +194,21 @@ function GameContents() {
         topic={topic}
         number={card}
         topicGivenUser={topicGivenUser}
-        topicSubmitted={State == State.RESPONSE_SUBMITTED}
+        topicSubmitted={state == State.RESPONSE_SUBMITTED}
         submittedResponses={submittedResponses}
         response={response}
         onInputChange={handleResponseInputChange}
-        onSubmit={ResponseSubmitted} />;
+        onSubmit={submitResponse} />;
+    case State.DECIDE_RANK:
+      return <DecideRank
+        responses={submittedResponses}
+        onClick={submitRanks}
+      />;
+    case State.SHOW_RESULT:
+      return <ShowResult
+        responses={submittedResponses}
+        onClick={playAgain}
+      />;
     default:
       return <ErrorPage
         errorMessage={"undefined state"} />;

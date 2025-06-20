@@ -73,6 +73,13 @@ exports.assignCards = (roomId) => {
     cardNums.delete(cardNum);
   }
 
+  // Assign initial ranks to each user.
+  let currentRank = 1;
+  for (const userId of Object.keys(usersDict)) {
+    usersDict[userId].rank = currentRank;
+    currentRank++;
+  }
+
   // Update database.
   updateUsers({
     roomId,
@@ -122,7 +129,28 @@ exports.getSubmittedResponses = (roomId) => {
 
   for (const userId of Object.keys(usersDict)) {
     if (usersDict[userId].response) {
-      responses.push({ userId, response: usersDict[userId].response });
+      responses.push({ userId, response: usersDict[userId].response, rank: usersDict[userId].rank });
+    }
+  }
+
+  return {
+    allResponseSubmitted: Object.keys(usersDict).length == responses.length,
+    responses
+  };
+};
+
+exports.getAllCardsAndResponses = (roomId) => {
+  const room = getRoomById(roomId);
+  if (!room) {
+    return res.status(404).json({ error: `room "${roomId}" not found` });
+  }
+
+  const usersDict = JSON.parse(room.users);
+  let responses = [];
+
+  for (const userId of Object.keys(usersDict)) {
+    if (usersDict[userId].response) {
+      responses.push({ userId, response: usersDict[userId].response, rank: usersDict[userId].rank, card: usersDict[userId].card });
     }
   }
 

@@ -2,6 +2,7 @@ import '../App.css';
 
 function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, submittedResponses, response, onInputChange, onSubmit }) {
     console.log(submittedResponses);
+    console.log(topicSubmitted);
     return (
         <div>
             {topicGivenUser}のお題: {topic}<br />
