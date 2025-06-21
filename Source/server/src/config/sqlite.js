@@ -13,15 +13,17 @@ db.exec(`                 -- SQL begins
     roomId   TEXT PRIMARY KEY,       -- Room name / code
     gameType TEXT DEFAULT 'defaultGame',
     stage    TEXT DEFAULT 'lobby',   -- lobby → playing → finished
-
     users    TEXT,                   -- JSON array of user IDs
-    cards    TEXT DEFAULT '[]',      -- JSON array of cards values
-    status   TEXT DEFAULT '[]',      -- JSON array of status (0 = not ready, 1 = ready)
-
     topic              TEXT DEFAULT '',
-    responses          TEXT DEFAULT '[]',  -- per-user array
-    ranks              TEXT DEFAULT '[]',  -- per-user array of ints
     acceptingNewUsers  INTEGER DEFAULT 1   -- 1=true, 0=false
+  )
+`);
+
+db.exec(`                 -- SQL begins
+  CREATE TABLE IF NOT EXISTS users (
+    userId   TEXT PRIMARY KEY,       -- User name
+    roomId   TEXT,       -- Room name / code
+    socketId   TEXT
   )
 `);
 
