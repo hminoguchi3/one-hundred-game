@@ -8,6 +8,9 @@ const cors = require('cors');
 // Import the room router we just wrote
 const roomRoutes = require('./routes/roomRoutes');
 
+// ❶  ADD THIS LINE just under the other require() calls
+const { getRoomById, setTopic, setUserResponse } = require('./models/roomModel');
+
 // Create the Express application
 const app = express();
 
