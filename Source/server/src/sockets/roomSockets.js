@@ -83,7 +83,7 @@ function configureSocketIo(app) {
         /* cleanup */
         socket.on('disconnect', () => {
             console.log('client disconnected', socket.id);
-            // deleteUserBySocketId(socket.id);
+            deleteUserBySocketId(socket.id);
         });
     });
 

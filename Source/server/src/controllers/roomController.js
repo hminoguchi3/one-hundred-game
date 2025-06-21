@@ -7,11 +7,18 @@ const {
   setTopic,
 } = require('../models/roomModel');
 
+const {
+  getUserBySocketId,
+  deleteUserById,
+  createUser,
+} = require('../models/userModel');
+
 exports.joinOrCreateRoom = (roomId, userId, socketId) => {
   if (!roomId || !userId || !socketId)
     throw new Error('roomId, userId, and socketId are required.');
 
   let room = getRoomById(roomId.trim());
+  createUser(userId, socketId, roomId);
 
   /* ── CREATE ───────────────────────────────────────────────────────── */
   if (!room) {
@@ -214,10 +221,11 @@ exports.resetRoom = (roomId) => {
 };
 
 exports.deleteUserBySocketId = (socketId) => {
-  const { roomId, userId } = searchBySocketId(socketId);
-  if (!roomId || !userId) {
-    return res.status(404).json({ error: `soocket "${socketId}" not found` });
-  }
+  const user = getUserBySocketId(socketId);
+  if (!user) return;
+  const { roomId, userId } = user;
+
+  deleteUserById(userId);
 
   const room = getRoomById(roomId);
   const usersDict = JSON.parse(room.users);
