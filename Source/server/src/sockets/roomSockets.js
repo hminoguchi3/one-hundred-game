@@ -9,7 +9,14 @@ function configureSocketIo(app) {
         }
     });
 
-    const { joinOrCreateRoom, assignCards, setUserResponse, getSubmittedResponses, getAllCardsAndResponses } = require('../controllers/roomController');
+    const {
+        joinOrCreateRoom,
+        assignCards,
+        setUserResponse,
+        getSubmittedResponses,
+        getAllCardsAndResponses,
+        openCard
+    } = require('../controllers/roomController');
 
     const { getRoomById, setTopic } = require('../models/roomModel');
 
@@ -61,8 +68,9 @@ function configureSocketIo(app) {
             io.to(roomId).emit('responseUpdated', { allResponseSubmitted, responses });
         });
 
-        socket.on('submitRanks', ({ roomId }) => {
-            io.to(roomId).emit('ranksSubmitted', { cardsAndResponses: getAllCardsAndResponses(roomId) });
+        socket.on('openCard', ({ roomId, userId }) => {
+            openCard(roomId, userId);
+            io.to(roomId).emit('cardOpened', getAllCardsAndResponses(roomId));
         });
 
         socket.on('playAgain', ({ roomId }) => {

@@ -7,7 +7,7 @@ import ErrorPage from './components/ErrorPage';
 import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
 import ResponseInputForm from './components/ResponseInputForm';
-import DecideRank from './components/DecideRank';
+import OpenCard from './components/OpenCard';
 import ShowResult from './components/ShowResult';
 import { socket } from './utils/socket';
 import { getUsersInRoomApi } from './utils/api';
@@ -19,7 +19,8 @@ function GameContents() {
     ENTER_TOPIC: 'ENTER_TOPIC',
     ENTER_RESPONSE: 'ENTER_RESPONSE',
     RESPONSE_SUBMITTED: 'RESPONSE_SUBMITTED',
-    DECIDE_RANK: 'DECIDE_RANK',
+    OPEN_CARD: 'OPEN_CARD',
+    OPENED_CARD: 'OPENED_CARD',
     SHOW_RESULT: 'SHOW_RESULT'
   };
 
@@ -92,14 +93,16 @@ function GameContents() {
         console.log("responseUpdated: ", payload);
         setSubmittedResponses(payload.responses);
         if (payload.allResponseSubmitted) {
-          setState(State.DECIDE_RANK);
+          setState(State.OPEN_CARD);
         }
       });
-      // Rank is finalized by one of the users.
-      socket.on('ranksSubmitted', (payload) => {
-        console.log("ranksSubmitted: ", payload);
-        setSubmittedResponses(payload.cardsAndResponses);
-        setState(State.SHOW_RESULT);
+      socket.on('cardOpened', (payload) => {
+        console.log("cardOpened: ", payload);
+        const { allCardsOpened, responses } = payload;
+        setSubmittedResponses(responses);
+        if (allCardsOpened) {
+          setState(State.SHOW_RESULT);
+        }
       });
       // Rank is finalized by one of the users.
       socket.on('playAgain', (payload) => {
@@ -124,8 +127,9 @@ function GameContents() {
     setState(State.RESPONSE_SUBMITTED);
   };
 
-  const submitRanks = async () => {
-    socket.emit('submitRanks', { roomId });
+  const openCard = async () => {
+    socket.emit('openCard', { roomId, userId });
+    setState(State.OPENED_CARD);
   };
 
   const playAgain = async () => {
@@ -176,15 +180,18 @@ function GameContents() {
         topic={topic}
         number={card}
         topicGivenUser={topicGivenUser}
-        topicSubmitted={state == State.RESPONSE_SUBMITTED}
+        topicSubmitted={state === State.RESPONSE_SUBMITTED}
         submittedResponses={submittedResponses}
         response={response}
         setter={setResponse}
         onSubmit={submitResponse} />;
-    case State.DECIDE_RANK:
-      return <DecideRank
+    case State.OPEN_CARD:
+    case State.OPENED_CARD:
+      return <OpenCard
         responses={submittedResponses}
-        onClick={submitRanks}
+        number={card}
+        openedCard={state === State.OPENED_CARD}
+        onClick={openCard}
       />;
     case State.SHOW_RESULT:
       return <ShowResult

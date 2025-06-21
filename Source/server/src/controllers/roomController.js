@@ -147,14 +147,51 @@ exports.getAllCardsAndResponses = (roomId) => {
 
   const usersDict = JSON.parse(room.users);
   let responses = [];
+  let allCardsOpened = true;
 
   for (const userId of Object.keys(usersDict)) {
     if (usersDict[userId].response) {
-      responses.push({ userId, response: usersDict[userId].response, rank: usersDict[userId].rank, card: usersDict[userId].card });
+      responses.push({
+        userId,
+        response: usersDict[userId].response,
+        card: usersDict[userId].cardOpened ? usersDict[userId].card : undefined,
+        correct: usersDict[userId].correct
+      });
+    }
+    if (!usersDict[userId].cardOpened) {
+      allCardsOpened = false;
     }
   }
 
-  return responses;
+  return { allCardsOpened, responses };
+};
+
+exports.openCard = (roomId, cardOpenedUserId) => {
+  const room = getRoomById(roomId);
+  if (!room) {
+    return res.status(404).json({ error: `room "${roomId}" not found` });
+  }
+
+  const usersDict = JSON.parse(room.users);
+  let openedCardIsMinimum = true;
+
+  for (const userId of Object.keys(usersDict)) {
+    if (userId == cardOpenedUserId) continue;
+    if (usersDict[userId].cardOpened) continue;
+    if (usersDict[userId].card < usersDict[cardOpenedUserId].card) {
+      // Another user has a card with lower value. The user should not have opened the card.
+      openedCardIsMinimum = false;
+      break;
+    }
+  }
+
+  usersDict[cardOpenedUserId].correct = openedCardIsMinimum;
+  usersDict[cardOpenedUserId].cardOpened = true;
+
+  updateUsers({
+    roomId,
+    users: JSON.stringify(usersDict),
+  });
 };
 
 exports.deleteUserBySocketId = (socketId) => {
