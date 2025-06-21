@@ -1,6 +1,6 @@
 import '../App.css';
 
-function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, submittedResponses, response, onInputChange, onSubmit }) {
+function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, submittedResponses, response, setter, onSubmit }) {
     console.log(submittedResponses);
     console.log(topicSubmitted);
     return (
@@ -14,7 +14,9 @@ function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, subm
                         id="response"
                         name="response"
                         value={response}
-                        onChange={onInputChange}
+                        onChange={(event) => {
+                            setter(event.target.value);
+                        }}
                     />
                     <button onClick={onSubmit}>決定</button><br />
                 </>

@@ -37,25 +37,6 @@ function GameContents() {
   const [usersInRoom, setUsersInRoom] = useState([]);
   const [submittedResponses, setSubmittedResponses] = useState([]);
 
-  const handleEnterRoomInputChange = (event) => {
-    const { name, value } = event.target;
-    if (name == "userId") {
-      setUserId(value);
-    } else if (name == "roomId") {
-      setRoomId(value);
-    }
-  };
-
-  const handleTopicInputChange = (event) => {
-    const { value } = event.target;
-    setTopic(value);
-  };
-
-  const handleResponseInputChange = (event) => {
-    const { value } = event.target;
-    setResponse(value);
-  };
-
   // To be called initially, only once.
   useEffect(() => {
     socket.connect();
@@ -176,7 +157,8 @@ function GameContents() {
       return <EnterRoomInputForm
         roomId={roomId}
         userId={userId}
-        onInputChange={handleEnterRoomInputChange}
+        roomIdSetter={setRoomId}
+        userIdSetter={setUserId}
         onSubmit={accessRoom} />;
     case State.LOBBY:
       return <Lobby
@@ -186,7 +168,7 @@ function GameContents() {
     case State.ENTER_TOPIC:
       return <TopicInputForm
         topic={topic}
-        onInputChange={handleTopicInputChange}
+        setter={setTopic}
         onSubmit={topicSubmitted} />;
     case State.ENTER_RESPONSE:
     case State.RESPONSE_SUBMITTED:
@@ -197,7 +179,7 @@ function GameContents() {
         topicSubmitted={state == State.RESPONSE_SUBMITTED}
         submittedResponses={submittedResponses}
         response={response}
-        onInputChange={handleResponseInputChange}
+        setter={setResponse}
         onSubmit={submitResponse} />;
     case State.DECIDE_RANK:
       return <DecideRank

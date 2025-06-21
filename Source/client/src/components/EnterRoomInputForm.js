@@ -1,6 +1,6 @@
 import '../App.css';
 
-function EnterRoomInputForm({roomId, userId, onInputChange, onSubmit}) {
+function EnterRoomInputForm({ roomId, userId, roomIdSetter, userIdSetter, onSubmit }) {
   return (
     <div>
       部屋の名前: <input
@@ -8,7 +8,9 @@ function EnterRoomInputForm({roomId, userId, onInputChange, onSubmit}) {
         id="roomId"
         name="roomId"
         value={roomId}
-        onChange={onInputChange}
+        onChange={(event) => {
+          roomIdSetter(event.target.value);
+        }}
       /><br />
       プレイヤーの名前:
       <input
@@ -16,7 +18,9 @@ function EnterRoomInputForm({roomId, userId, onInputChange, onSubmit}) {
         id="userId"
         name="userId"
         value={userId}
-        onChange={onInputChange}
+        onChange={(event) => {
+          userIdSetter(event.target.value);
+        }}
       /><br />
       <button onClick={onSubmit}>決定</button>
     </div>

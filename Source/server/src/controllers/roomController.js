@@ -156,3 +156,20 @@ exports.getAllCardsAndResponses = (roomId) => {
 
   return responses;
 };
+
+exports.deleteUserBySocketId = (socketId) => {
+  const room = getRoomById(roomId);
+  if (!room) {
+    return res.status(404).json({ error: `room "${roomId}" not found` });
+  }
+  const usersDict = JSON.parse(room.users);
+  for (const userId of Object.keys(usersDict)) {
+    if (usersDict[userId].socketId === socketId) {
+      delete usersDict[userId];
+    }
+  }
+  res.json({
+    roomId,
+    users: Object.keys(JSON.parse(room.users))
+  });
+};
