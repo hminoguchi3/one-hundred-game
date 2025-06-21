@@ -10,7 +10,8 @@ import ResponseInputForm from './components/ResponseInputForm';
 import OpenCard from './components/OpenCard';
 import ShowResult from './components/ShowResult';
 import { socket } from './utils/socket';
-import { getUsersInRoomApi } from './utils/api';
+import { getUsersInRoomApi } from './utils/api'; //edit 6/21/2025 6:28pm
+//import { getUsersInRoomApi, enterRoomApi } from './utils/api'; 
 
 function GameContents() {
   const State = {
@@ -59,6 +60,7 @@ function GameContents() {
 
     try {
       resetStatesForNewGame();
+      //await enterRoomApi(userId, roomId); // edit 6/21/2025
       socket.emit('joinRoom', { userId, roomId });
 
       // Listen for updates in the current room.

@@ -1,5 +1,5 @@
 import '../App.css';
-import { API_BASE_URL } from '../utils/constants';
+import { API_BASE_URL } from './constants';
 
 async function getErrorMessage(response) {
     const errorMessage = await response.text();
