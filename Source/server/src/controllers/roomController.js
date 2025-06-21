@@ -1,8 +1,10 @@
 // Import model helpers
 const {
   getRoomById,
+  deleteRoomById,
   createRoom,
   updateUsers,
+  setTopic,
 } = require('../models/roomModel');
 
 exports.joinOrCreateRoom = (roomId, userId, socketId) => {
@@ -73,13 +75,6 @@ exports.assignCards = (roomId) => {
     cardNums.delete(cardNum);
   }
 
-  // Assign initial ranks to each user.
-  let currentRank = 1;
-  for (const userId of Object.keys(usersDict)) {
-    usersDict[userId].rank = currentRank;
-    currentRank++;
-  }
-
   // Update database.
   updateUsers({
     roomId,
@@ -129,7 +124,7 @@ exports.getSubmittedResponses = (roomId) => {
 
   for (const userId of Object.keys(usersDict)) {
     if (usersDict[userId].response) {
-      responses.push({ userId, response: usersDict[userId].response, rank: usersDict[userId].rank });
+      responses.push({ userId, response: usersDict[userId].response });
     }
   }
 
@@ -194,19 +189,47 @@ exports.openCard = (roomId, cardOpenedUserId) => {
   });
 };
 
-exports.deleteUserBySocketId = (socketId) => {
+exports.resetRoom = (roomId) => {
   const room = getRoomById(roomId);
   if (!room) {
     return res.status(404).json({ error: `room "${roomId}" not found` });
   }
   const usersDict = JSON.parse(room.users);
+  let newUsersDict = {};
   for (const userId of Object.keys(usersDict)) {
-    if (usersDict[userId].socketId === socketId) {
-      delete usersDict[userId];
-    }
+    newUsersDict[userId] = {
+      socketId: usersDict[userId].socketId,
+      card: undefined,
+      response: undefined,
+      cardOpened: undefined,
+      correct: undefined
+    };
   }
-  res.json({
+
+  updateUsers({
     roomId,
-    users: Object.keys(JSON.parse(room.users))
+    users: JSON.stringify(newUsersDict),
   });
+  setTopic({ roomId, topic: undefined });
+};
+
+exports.deleteUserBySocketId = (socketId) => {
+  const { roomId, userId } = searchBySocketId(socketId);
+  if (!roomId || !userId) {
+    return res.status(404).json({ error: `soocket "${socketId}" not found` });
+  }
+
+  const room = getRoomById(roomId);
+  const usersDict = JSON.parse(room.users);
+  delete usersDict[userId];
+
+  if (Object.keys(usersDict).length <= 0) {
+    // No more users left in the room.
+    deleteRoomById(roomId);
+  } else {
+    updateUsers({
+      roomId,
+      users: JSON.stringify(usersDict),
+    });
+  }
 };

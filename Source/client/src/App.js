@@ -58,11 +58,8 @@ function GameContents() {
     setError(null);
 
     try {
+      resetStatesForNewGame();
       socket.emit('joinRoom', { userId, roomId });
-
-      setState(State.LOBBY);
-      setLoading(false);
-      refreshUsers(roomId);
 
       // Listen for updates in the current room.
       // New user joined.
@@ -104,9 +101,8 @@ function GameContents() {
           setState(State.SHOW_RESULT);
         }
       });
-      // Rank is finalized by one of the users.
-      socket.on('playAgain', (payload) => {
-        setState(State.LOBBY);
+      socket.on('playAgain', () => {
+        resetStatesForNewGame();
       });
     } catch (error) {
       setError(error);
@@ -134,6 +130,16 @@ function GameContents() {
 
   const playAgain = async () => {
     socket.emit('playAgain', { roomId });
+  };
+
+  const resetStatesForNewGame = () => {
+    setState(State.LOBBY);
+    setResponse('');
+    setCard(-1);
+    setTopic('');
+    setTopicGivenUser('');
+    setSubmittedResponses([]);
+    refreshUsers(roomId);
   };
 
   const refreshUsers = async (roomId) => {

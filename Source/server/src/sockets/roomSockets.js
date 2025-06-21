@@ -15,7 +15,9 @@ function configureSocketIo(app) {
         setUserResponse,
         getSubmittedResponses,
         getAllCardsAndResponses,
-        openCard
+        openCard,
+        resetRoom,
+        deleteUserBySocketId
     } = require('../controllers/roomController');
 
     const { getRoomById, setTopic } = require('../models/roomModel');
@@ -74,12 +76,14 @@ function configureSocketIo(app) {
         });
 
         socket.on('playAgain', ({ roomId }) => {
+            resetRoom(roomId);
             io.to(roomId).emit('playAgain', {});
         });
 
         /* cleanup */
         socket.on('disconnect', () => {
             console.log('client disconnected', socket.id);
+            // deleteUserBySocketId(socket.id);
         });
     });
 

@@ -4,6 +4,8 @@ const db = require('../config/sqlite');
 // Prepare a reusable statement to fetch a room by ID
 const stmtGet = db.prepare('SELECT * FROM rooms WHERE roomId = ?');
 
+const stmtDelete = db.prepare(`DELETE FROM rooms WHERE roomId = ?`);
+
 /* INSERT now includes the four new columns */
 const stmtInsert = db.prepare(`
   INSERT INTO rooms
@@ -28,6 +30,9 @@ const stmtUpdateTopic = db.prepare(`
 
 // Return the full row or undefined
 exports.getRoomById = roomId => stmtGet.get(roomId);
+
+// Delete a room
+exports.deleteRoomById = roomId => stmtDelete.run(roomId);
 
 // Insert a brand-new room (called once on creation)
 exports.createRoom = roomObj => stmtInsert.run(roomObj);
