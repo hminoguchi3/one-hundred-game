@@ -2,7 +2,7 @@ function configureSocketIo(app) {
     const http = require('http');
     const { Server } = require('socket.io');
 
-    const httpServer = http.createServer(app);
+    //const httpServer = http.createServer(app);
     
     /*
     const io = new Server(httpServer, {
@@ -13,10 +13,14 @@ function configureSocketIo(app) {
 
     const allowedOrigins = [
     'http://localhost:5000',
-    'https://tanoshimigame.com'];
+    'https://tanoshimigame.com',
+    'https://tanoshimigame.com/'
+]; //edit
+
+    const httpServer = http.createServer(app); //edit
 
     const io = new Server(httpServer, {
-    cors: { origin: allowedOrigins }});
+    cors: { origin: allowedOrigins }}); //edit
 
     const {
         joinOrCreateRoom,

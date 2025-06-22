@@ -9,4 +9,5 @@
 
 export const SOCKET_SERVER_URL =
   //process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001';   // <— same host by default
-  process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+  //process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+  'https://one-hundred-game.onrender.com' || process.env.REACT_APP_SOCKET_URL;
