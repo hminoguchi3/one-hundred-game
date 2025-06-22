@@ -39,6 +39,7 @@ function GameContents() {
 
   // To be called initially, only once.
   useEffect(() => {
+    console.log("Socket url: ", process.env.REACT_APP_SOCKET_URL);
     socket.connect();
     socket.on('socketError', (payload) => {
       setError(payload);
