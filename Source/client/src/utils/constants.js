@@ -8,5 +8,5 @@
 
 
 export const SOCKET_SERVER_URL =
-  process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001';   // <— same host by default
-  //process.env.REACT_APP_SOCKET_URL;
+  //process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001';   // <— same host by default
+  process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';

@@ -3,11 +3,20 @@ function configureSocketIo(app) {
     const { Server } = require('socket.io');
 
     const httpServer = http.createServer(app);
+    
+    /*
     const io = new Server(httpServer, {
         cors: {
             origin: "http://localhost:3000"               // loosen in dev; tighten for prod
         }
-    });
+    });*/ // previous
+
+    const allowedOrigins = [
+    'http://localhost:5000',
+    'https://tanoshimigame.com'];
+
+    const io = new Server(httpServer, {
+    cors: { origin: allowedOrigins }});
 
     const {
         joinOrCreateRoom,
@@ -91,7 +100,8 @@ function configureSocketIo(app) {
     });
 
     // Start the HTTP server
-    const SOCKET_PORT = 3001;
+    //const SOCKET_PORT = 3001; // previous
+    const SOCKET_PORT = process.env.PORT || 5000; // edit
     httpServer.listen(SOCKET_PORT, () => {
         console.log(`Socket.IO server listening on port ${SOCKET_PORT}`);
     });
