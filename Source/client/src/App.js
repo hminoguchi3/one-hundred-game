@@ -10,7 +10,6 @@ import ResponseInputForm from './components/ResponseInputForm';
 import OpenCard from './components/OpenCard';
 import ShowResult from './components/ShowResult';
 import { socket } from './utils/socket';
-import { getUsersInRoomApi } from './utils/api';
 
 function GameContents() {
   const State = {
@@ -45,6 +44,14 @@ function GameContents() {
       setError(payload);
     });
 
+    // Listen for updates in the current room.
+    // New user joined.
+    socket.on('userJoined', (payload) => {
+      console.log('userJoined: ', payload);
+      setUsersInRoom(payload.users);
+    }
+    );
+
     return () => {
       // To be called when AccessRoom obj is no longer used.
       socket.disconnect();
@@ -54,19 +61,11 @@ function GameContents() {
 
   // Called when entering a room.
   const accessRoom = async () => {
-    setLoading(true); // ローディング開始
     setError(null);
 
     try {
       resetStatesForNewGame();
       socket.emit('joinRoom', { userId, roomId });
-
-      // Listen for updates in the current room.
-      // New user joined.
-      socket.on('userJoined', (payload) => {
-        refreshUsers(payload.roomId);
-      }
-      );
       // Game is started.
       socket.on('startGame', (payload) => {
         setState(State.ENTER_TOPIC);
@@ -139,19 +138,7 @@ function GameContents() {
     setTopic('');
     setTopicGivenUser('');
     setSubmittedResponses([]);
-    refreshUsers(roomId);
   };
-
-  const refreshUsers = async (roomId) => {
-    setLoading(true); // ローディング開始
-    try {
-      const jsonData = await getUsersInRoomApi(roomId);
-      setUsersInRoom(jsonData.users)
-      setLoading(false);
-    } catch (error) {
-      setError(error);
-    }
-  }
 
   if (error) {
     return <ErrorPage

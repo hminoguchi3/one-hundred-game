@@ -17,7 +17,7 @@ exports.joinOrCreateRoom = (roomId, userId, socketId) => {
   if (!roomId || !userId || !socketId)
     throw new Error('roomId, userId, and socketId are required.');
 
-  let room = getRoomById(roomId.trim());
+  let room = getRoomById(roomId);
   createUser(userId, socketId, roomId);
 
   /* ── CREATE ───────────────────────────────────────────────────────── */
@@ -90,20 +90,17 @@ exports.assignCards = (roomId) => {
 };
 
 // Returns names of the users in a room.
-exports.getUsersByRoom = (req, res) => {
-  const { roomId } = req.params;
-
+exports.getUsersByRoom = (roomId) => {
   // Look up the room
   const room = getRoomById(roomId);
   if (!room) {
     return res.status(404).json({ error: `room "${roomId}" not found` });
   }
 
-  // Send back the array (parse JSON column)
-  res.json({
+  return {
     roomId,
     users: Object.keys(JSON.parse(room.users))
-  });
+  };
 };
 
 exports.setUserResponse = ({ roomId, userId, response }) => {

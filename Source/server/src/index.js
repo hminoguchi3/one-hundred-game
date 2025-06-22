@@ -5,12 +5,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-// Import the room router we just wrote
-const roomRoutes = require('./routes/roomRoutes');
-
-// ❶  ADD THIS LINE just under the other require() calls
-const { getRoomById, setTopic, setUserResponse } = require('./models/roomModel');
-
 // Create the Express application
 const app = express();
 
@@ -19,22 +13,6 @@ app.use(cors());
 
 // Parse JSON request bodies
 app.use(express.json());
-
-// Simple sanity-check endpoint
-app.get('/api/hello', (req, res) =>
-  res.json({ message: 'Hello from the backend!' })
-);
-
-// Mount all room-related routes at /api/room
-app.use('/api/room', roomRoutes);
-
-// Read the port from .env or default to 5000
-const PORT = process.env.PORT || 5000;
-
-// Start the server and log readiness
-app.listen(PORT, () =>
-  console.log(`API running on http://localhost:${PORT}`)
-);
 
 // Socket
 const { configureSocketIo } = require('./sockets/roomSockets');
