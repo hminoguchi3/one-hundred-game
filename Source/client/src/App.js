@@ -1,4 +1,4 @@
-import logo from './kishi.png';
+
 import './App.css';
 import React, { useEffect, useState } from 'react';
 import EnterRoomInputForm from './components/EnterRoomInputForm';
@@ -6,6 +6,7 @@ import Lobby from './components/Lobby';
 import ErrorPage from './components/ErrorPage';
 import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
+import WebPageTemplate from './components/WebPageTemplate';
 import ResponseInputForm from './components/ResponseInputForm';
 import OpenCard from './components/OpenCard';
 import ShowResult from './components/ShowResult';
@@ -198,16 +199,7 @@ function GameContents() {
 }
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Hello Mizuki!
-        </p>
-        <GameContents />
-      </header>
-    </div >);
+  return WebPageTemplate({ contents: GameContents() });
 }
 
 export default App; 

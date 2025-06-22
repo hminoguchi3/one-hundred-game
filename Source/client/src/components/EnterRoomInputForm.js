@@ -1,9 +1,11 @@
 import '../App.css';
+import { Button } from "./util.js"
 
 function EnterRoomInputForm({ roomId, userId, roomIdSetter, userIdSetter, onSubmit }) {
   return (
-    <div>
+    <div className="App-form">
       部屋の名前: <input
+        className="inputTextBox"
         type="text"
         id="roomId"
         name="roomId"
@@ -14,6 +16,7 @@ function EnterRoomInputForm({ roomId, userId, roomIdSetter, userIdSetter, onSubm
       /><br />
       プレイヤーの名前:
       <input
+        className="inputTextBox"
         type="text"
         id="userId"
         name="userId"
@@ -22,7 +25,7 @@ function EnterRoomInputForm({ roomId, userId, roomIdSetter, userIdSetter, onSubm
           userIdSetter(event.target.value);
         }}
       /><br />
-      <button onClick={onSubmit}>決定</button>
+      <Button onClick={onSubmit}>決定</Button>
     </div>
   );
 }
