@@ -17,7 +17,8 @@ function configureSocketIo(app) {
         getAllCardsAndResponses,
         openCard,
         resetRoom,
-        deleteUserBySocketId
+        deleteUserBySocketId,
+        getUsersByRoom
     } = require('../controllers/roomController');
 
     const { getRoomById, setTopic } = require('../models/roomModel');
@@ -32,8 +33,10 @@ function configureSocketIo(app) {
             console.log(`${userId} joined ${roomId}`);
             try {
                 joinOrCreateRoom(roomId, userId, socket.id);
-                // Notify everyone else in the room
-                socket.to(roomId).emit('userJoined', { userId, roomId });
+                // Send the current list of users to everyone in the room.
+                const { users } = getUsersByRoom(roomId);
+                socket.emit('userJoined', { roomId, users });
+                socket.to(roomId).emit('userJoined', { roomId, users });
             } catch (error) {
                 socket.emit('socketError', { message: error.message });
             }
