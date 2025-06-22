@@ -11,16 +11,12 @@ function configureSocketIo(app) {
         }
     });*/ // previous
 
-    const allowedOrigins = [
-    'http://localhost:5000',
-    'https://tanoshimigame.com',
-    'https://tanoshimigame.com/'
-]; //edit
+
 
     const httpServer = http.createServer(app); //edit
 
     const io = new Server(httpServer, {
-    cors: { origin: allowedOrigins }}); //edit
+    cors: { origin: '*' }}); //edit
 
     const {
         joinOrCreateRoom,
