@@ -9,7 +9,8 @@ function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, subm
             </div>
             <div className="App-form-and-response">
                 <div className="App-form">
-                    {topicGivenUser}のお題: {topic}<br />
+                    {topicGivenUser}のお題<br />
+                    {topic}<br /><br />
                     {!topicSubmitted && (
                         <>
                             この数字に合う物を入力しよう！
@@ -23,18 +24,18 @@ function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, subm
                                     setter(event.target.value);
                                 }}
                             /><br />
-                            <Button onClick={onSubmit}>決定</Button><br />
+                            <Button onClick={onSubmit}>決定</Button>
                         </>
                     )}
                     {topicSubmitted && (
                         <>
-                            他のプレイヤーを待っています。
+                            <br />他のプレイヤーを待っています。
                         </>
                     )}
                 </div>
-                <div>
+                <div className="App-responses">
                     <br />みんなの回答
-                    {submittedResponses.map((obj, index) => (
+                    {submittedResponses.map((obj) => (
                         <div className="App-response">
                             <div className="App-name">{obj.userId}さん</div>
                             <div>{obj.response}</div>

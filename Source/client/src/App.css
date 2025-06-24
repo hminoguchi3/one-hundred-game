@@ -82,6 +82,7 @@
 }
 
 .App-card-small {
+  width: 3vw;
   aspect-ratio: 10 / 12;
   display: flex;
   flex-direction: column;
@@ -95,7 +96,7 @@
 }
 
 .App-form-and-response {
-  width: 80vw;
+  width: 90vw;
   height: 55vh;
   display: grid;
   /* Two columns. */
@@ -117,16 +118,24 @@
   background-size: 100% 100%;
   padding-bottom: 10vh;
   padding-top: 8vh;
-  padding-left: 2vh;
-  padding-right: 2vh;
+  padding-left: 4vh;
+  padding-right: 4vh;
   line-height: 2;
 }
+
 
 .App-response-and-card {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
+}
+
+.App-responses {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* justify-content: center; */
 }
 
 .App-response {
