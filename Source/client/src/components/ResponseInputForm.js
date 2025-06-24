@@ -1,30 +1,48 @@
 import '../App.css';
+import { Button } from "./util.js"
 
 function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, submittedResponses, response, setter, onSubmit }) {
     return (
-        <div>
-            {topicGivenUser}のお題: {topic}<br />
-            あなたの数字は{number}です<br /><br />
-            {!topicSubmitted && (
-                <>
-                    <input
-                        type="text"
-                        id="response"
-                        name="response"
-                        value={response}
-                        onChange={(event) => {
-                            setter(event.target.value);
-                        }}
-                    />
-                    <button onClick={onSubmit}>決定</button><br />
-                </>
-            )}
-            <pre>みんなの回答</pre>
-            <ul>
-                {submittedResponses.map((obj, index) => (
-                    <li key={index}>{obj.userId}さん：{obj.response}</li>
-                ))}
-            </ul>
+        <div className="App-response-form-wrapper">
+            <div className="App-card">
+                {number}
+            </div>
+            <div className="App-form-and-response">
+                <div className="App-form">
+                    {topicGivenUser}のお題<br />
+                    {topic}<br /><br />
+                    {!topicSubmitted && (
+                        <>
+                            この数字に合う物を入力しよう！
+                            <input
+                                type="text"
+                                className="inputTextBox"
+                                id="response"
+                                name="response"
+                                value={response}
+                                onChange={(event) => {
+                                    setter(event.target.value);
+                                }}
+                            /><br />
+                            <Button onClick={onSubmit}>決定</Button>
+                        </>
+                    )}
+                    {topicSubmitted && (
+                        <>
+                            <br />他のプレイヤーを待っています。
+                        </>
+                    )}
+                </div>
+                <div className="App-responses">
+                    <br />みんなの回答
+                    {submittedResponses.map((obj) => (
+                        <div className="App-response">
+                            <div className="App-name">{obj.userId}さん</div>
+                            <div>{obj.response}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }

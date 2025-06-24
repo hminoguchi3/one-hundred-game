@@ -1,19 +1,22 @@
-import logo from './kishi.png';
 import './App.css';
 import React, { useEffect, useState } from 'react';
 import EnterRoomInputForm from './components/EnterRoomInputForm';
+import Rule from './components/Rule';
 import Lobby from './components/Lobby';
 import ErrorPage from './components/ErrorPage';
 import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
+import WebPageTemplate from './components/WebPageTemplate';
 import ResponseInputForm from './components/ResponseInputForm';
 import OpenCard from './components/OpenCard';
 import ShowResult from './components/ShowResult';
 import { socket } from './utils/socket';
+import { randomTopic } from './utils/constants';
 
 function GameContents() {
   const State = {
     INIT: 'INIT',
+    SHOW_RULE: 'SHOW_RULE',
     LOBBY: 'LOBBY',
     ENTER_TOPIC: 'ENTER_TOPIC',
     ENTER_RESPONSE: 'ENTER_RESPONSE',
@@ -149,6 +152,11 @@ function GameContents() {
     return <LoadingPage />
   }
 
+  function getRandomTopic() {
+    const index = Math.floor(Math.random() * randomTopic.length);
+    setTopic(randomTopic[index]);
+  }
+
   switch (state) {
     case State.INIT:
       return <EnterRoomInputForm
@@ -156,7 +164,11 @@ function GameContents() {
         userId={userId}
         roomIdSetter={setRoomId}
         userIdSetter={setUserId}
-        onSubmit={accessRoom} />;
+        onSubmit={accessRoom}
+        showRule={() => setState(State.SHOW_RULE)} />;
+    case State.SHOW_RULE:
+      return <Rule
+        onClose={() => setState(State.INIT)} />;
     case State.LOBBY:
       return <Lobby
         roomId={roomId}
@@ -166,7 +178,8 @@ function GameContents() {
       return <TopicInputForm
         topic={topic}
         setter={setTopic}
-        onSubmit={topicSubmitted} />;
+        onSubmit={topicSubmitted}
+        getRandomTopic={getRandomTopic} />;
     case State.ENTER_RESPONSE:
     case State.RESPONSE_SUBMITTED:
       return <ResponseInputForm
@@ -198,16 +211,7 @@ function GameContents() {
 }
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Hello Mizuki!
-        </p>
-        <GameContents />
-      </header>
-    </div >);
+  return WebPageTemplate({ contents: GameContents() });
 }
 
 export default App; 
