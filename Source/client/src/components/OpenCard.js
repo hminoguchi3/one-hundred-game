@@ -1,34 +1,35 @@
 import '../App.css';
 import { Button } from "./util.js"
-
-function getCorrectness(correct, card) {
-  // Card is undefined, meaning the card has not opened yet.
-  if (!card) {
-    return <span style={{ color: 'gray' }}>??</span>
-  }
-  if (correct) {
-    return <span style={{ color: 'green' }}>{card}</span>
-  }
-  return <span style={{ color: 'red' }}>{card}</span>
-}
+import { GetCorrectness } from './util.js';
 
 function OpenCard({ responses, number, openedCard, onClick }) {
   return (
-    <div className="App-wrapper">
+    <div className="App-response-form-wrapper">
       <div className="App-card">
         {number}
       </div>
-      <div className="App-form">
-        <ul>
-          {responses.map((obj, index) => (
-            <li key={index}>{obj.userId}さんの回答：{obj.response}  {getCorrectness(obj.correct, obj.card)}</li>
-          ))}
-        </ul>
-        {!openedCard && (
-          <>
-            <Button onClick={onClick}>カードを出す</Button>
-          </>
-        )}
+      <br />
+      {!openedCard && (
+        <>
+          あなたのカードが一番低いと思ったらカードを出しましょう
+        </>
+      )}
+      <div>
+        {responses.map((obj) => (
+          <div className="App-response-and-card">
+            <div className="App-response">
+              <div className="App-name">{obj.userId}さん</div>
+              <div>{obj.response}</div>
+            </div>
+            <div className="App-card-small">{GetCorrectness(obj.correct, obj.card)}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ width: "90%" }}> {!openedCard && (
+        <>
+          <Button onClick={onClick}>カードを出す</Button>
+        </>
+      )}
       </div>
     </div>
   );

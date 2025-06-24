@@ -9,7 +9,7 @@
 
 .App-header {
   background-color: #7a3c3c;
-  min-height: 10vh;
+  height: 10vh;
   display: flex;
   flex-direction: row;
   font-family: "bananaslip plus", "MS Pゴシック";
@@ -26,55 +26,127 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-around;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-content: center;
 
   /* --- 水玉模様 --- */
   background-image:
     radial-gradient(#ffffff70 30%, transparent 30%);
   /* 水玉のサイズと間隔を調整 */
   background-size: 20px 20px;
-}
 
-.App-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.App-form {
-  height: 40vh;
-  width: 60vw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(5px + 2vmin);
   font-family: "bananaslip plus", "MS Pゴシック";
+  font-size: calc(10px + 2vmin);
   color: #7a3c3c;
-  background-image: url("b-wipe004_orange.png");
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  padding-bottom: 8vh;
-  padding-top: 5vh;
-  line-height: 2;
+}
+
+.App-participant {
+  background-color: #ffffff87;
+  width: 70%;
+  margin: 1%;
+  border-radius: 8px;
+}
+
+.App-form-only-wrapper {
+  margin: 20%;
+  width: 70vmin;
+  height: 70vmin;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 10 / 12;
+}
+
+.App-response-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 90vh;
+  width: 90vw;
 }
 
 .App-card {
-  width: 15vw;
+  /* width: 15vw; */
+  height: 25vh;
   aspect-ratio: 10 / 12;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(5px + 4vmin);
-  font-family: "bananaslip plus", "MS Pゴシック";
   background-color: #ffffff;
   box-shadow: 0px 4px 8px rgba(78, 0, 0, 0.1);
   color: #7a3c3c;
   border-radius: 8px;
+}
+
+.App-card-small {
+  aspect-ratio: 10 / 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(5px + 4vmin);
+  background-color: #ffffff;
+  box-shadow: 0px 4px 8px rgba(78, 0, 0, 0.1);
+  padding: 3%;
+  border-radius: 8px;
+}
+
+.App-form-and-response {
+  width: 80vw;
+  height: 55vh;
+  display: grid;
+  /* Two columns. */
+  grid-template-columns: 1fr 0.9fr;
+  font-size: calc(5px + 2vmin);
+  border-radius: 8px;
+}
+
+.App-form {
+  width: 90%;
+  height: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(5px + 2vmin);
+  background-image: url("b-wipe004_orange.png");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  padding-bottom: 10vh;
+  padding-top: 8vh;
+  padding-left: 2vh;
+  padding-right: 2vh;
+  line-height: 2;
+}
+
+.App-response-and-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.App-response {
+  width: 30vw;
+  aspect-ratio: 10 / 1.5;
+  display: flex;
+  flex-direction: column;
+  align-items: top;
+  justify-content: top;
+  font-size: calc(5px + 2vmin);
+  background-color: #ffffff87;
+  margin: 2vmin;
+  padding: 1vmin;
+  color: #7a3c3c;
+  border-radius: 8px;
+}
+
+.App-name {
+  font-size: calc(5px + 1vmin);
+  text-align: left;
 }
 
 .inputTextBox-label,
@@ -97,15 +169,4 @@
   font-size: 1em;
   line-height: 1.1;
   color: #7a3c3c;
-}
-
-ul {
-  list-style-type: none;
-  font-family: "bananaslip plus", "MS Pゴシック";
-}
-
-ul li {
-  background: #ffffff95;
-  margin: 5px;
-  padding: 0px 5vw;
 }

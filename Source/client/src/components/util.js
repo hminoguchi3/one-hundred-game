@@ -19,7 +19,7 @@ export const Button = styled.button`
   outline: 0;
   border: 0; 
   text-transform: uppercase;
-  margin: 0px 0px;
+  margin: 2%;
   cursor: pointer;
   box-shadow: 0px 2px 2px lightgray;
   transition: ease background-color 250ms;
