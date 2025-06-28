@@ -37,7 +37,7 @@ function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, subm
                     <br />みんなの回答
                     {submittedResponses.map((obj) => (
                         <div className="App-response">
-                            <div className="App-name">{obj.userId}さん</div>
+                            <div className="App-name">{obj.userId}</div>
                             <div>{obj.response}</div>
                         </div>
                     ))}

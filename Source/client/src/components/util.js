@@ -24,7 +24,7 @@ export const Button = styled.button`
   box-shadow: 0px 2px 2px lightgray;
   transition: ease background-color 250ms;
   font-size: calc(5px + 2vmin);
-  font-family: "bananaslip plus", "MS Pゴシック";
+  font-family: "Yusei Magic", sans-serif;
   &:hover {
     background-color: rgb(224, 101, 0);
   }

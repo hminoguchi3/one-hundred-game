@@ -64,11 +64,20 @@ function GameContents() {
 
   // Called when entering a room.
   const accessRoom = async () => {
+    if (userId === "" || roomId === "") {
+      alert("あいことばと名前を入力してください。");
+      return;
+    }
     setError(null);
 
     try {
       resetStatesForNewGame();
       socket.emit('joinRoom', { userId, roomId });
+      // Tried to start with 1 user.
+      socket.on('tooFewUsersError', () => {
+        alert("ゲームを始めるには二人以上必要です。");
+      }
+      );
       // Game is started.
       socket.on('startGame', (payload) => {
         setState(State.ENTER_TOPIC);
@@ -116,11 +125,19 @@ function GameContents() {
   }
 
   const topicSubmitted = async () => {
+    if (topic === "") {
+      alert("お題を入力してください。");
+      return;
+    }
     socket.emit('setTopic', { userId, roomId, topic });
     setState(State.ENTER_RESPONSE);
   };
 
   const submitResponse = async () => {
+    if (response === "") {
+      alert("お題と数字に合うものを入力してください。");
+      return;
+    }
     socket.emit('submitResponse', { userId, roomId, response });
     setState(State.RESPONSE_SUBMITTED);
   };

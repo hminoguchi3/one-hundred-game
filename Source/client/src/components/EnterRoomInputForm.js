@@ -4,7 +4,7 @@ import { Button } from "./util.js"
 function EnterRoomInputForm({ roomId, userId, roomIdSetter, userIdSetter, onSubmit, showRule }) {
   return (
     <div className="App-form-only-wrapper">
-      <div className="App-form">
+      <div className="App-form" style={{ width: "90%" }}>
         部屋のあいことば: <input
           className="inputTextBox"
           type="text"
