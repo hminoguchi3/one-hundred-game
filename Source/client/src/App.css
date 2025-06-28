@@ -136,7 +136,6 @@
   padding: 10px;
   border-radius: 8px;
   margin: 3%;
-  /* background-color: rgba(255, 170, 0, 0.622); */
 
   &::-webkit-scrollbar {
     /* スクロールバーの背景色（トラックの背景） */
