@@ -109,7 +109,11 @@ function configureSocketIo(app) {
             io.to(roomId).emit('cardOpened', getAllCardsAndResponses(roomId));
 
             if (Object.keys(usersDict).length <= 1) {
-                return io.to(roomId).emit('tooFewUsersError', { message: 'You need at least 2 people to play.' });
+                const acceptingNewUsers = room.acceptingNewUsers;
+                return io.to(roomId).emit(
+                    'everyoneElseDisconnectedError',
+                    { gameOngoing: !acceptingNewUsers, message: 'Everyone else disconnected - you are the only one left.' }
+                );
             }
         });
     });

@@ -35,12 +35,14 @@ function ResponseInputForm({ topic, number, topicGivenUser, topicSubmitted, subm
                 </div>
                 <div className="App-responses">
                     <br />みんなの回答
+                    <div className="App-scrollable-container">
                     {submittedResponses.map((obj) => (
                         <div className="App-response">
                             <div className="App-name">{obj.userId}</div>
                             <div>{obj.response}</div>
                         </div>
                     ))}
+                    </div>
                 </div>
             </div>
         </div>

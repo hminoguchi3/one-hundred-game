@@ -9,9 +9,12 @@ function Lobby({ roomId, usersInRoom, onStart }) {
         <br />
         現在参加しているプレイヤー
         <br />
+        <div className = "App-scrollable-container">
         {usersInRoom.map((str) => (
           <div className="App-participant">{str}</div>
-        ))}<Button onClick={onStart}>ゲームを始める</Button>
+        ))}
+        </div>
+        <Button onClick={onStart}>ゲームを始める</Button>
       </div>
     </div>
   );
