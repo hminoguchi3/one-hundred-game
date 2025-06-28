@@ -28,7 +28,7 @@ function DecideRank({ responses, onClick }) {
       {responses.map((obj) => (
         <div className="App-response-and-card">
           <div className="App-response">
-            <div className="App-name">{obj.userId}さん</div>
+            <div className="App-name">{obj.userId}</div>
             <div>{obj.response}</div>
           </div>
           <div className="App-card-small">{GetCorrectness(obj.correct, obj.card)}</div>

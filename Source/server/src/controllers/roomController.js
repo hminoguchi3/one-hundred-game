@@ -5,6 +5,7 @@ const {
   createRoom,
   updateUsers,
   setTopic,
+  acceptNewUsers,
 } = require('../models/roomModel');
 
 const {
@@ -39,7 +40,7 @@ exports.joinOrCreateRoom = (roomId, userId, socketId) => {
     /* ── JOIN EXISTING ────────────────────────────────────────────────── */
   } else {
     if (!room.acceptingNewUsers)          // 0 or 1 from DB
-      throw new Error('Room is closed to new users.');
+      throw new Error('This room is hosting ongoing game - no longer accepting new users.');
 
     if (room.users.size > 10)
       throw new Error(`Too many users in room! Cannot join.`);
@@ -215,6 +216,7 @@ exports.resetRoom = (roomId) => {
     users: JSON.stringify(newUsersDict),
   });
   setTopic({ roomId, topic: undefined });
+  acceptNewUsers(roomId);
 };
 
 exports.deleteUserBySocketId = (socketId) => {

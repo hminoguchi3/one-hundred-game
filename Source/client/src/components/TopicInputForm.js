@@ -4,7 +4,7 @@ import { Button } from "./util.js"
 function TopicInputForm({ topic, setter, onSubmit, getRandomTopic }) {
   return (
     <div className="App-form-only-wrapper">
-      <div className="App-form">
+      <div className="App-form" style={{ width: "90%" }}>
         お題: <input
           type="text"
           id="topic"

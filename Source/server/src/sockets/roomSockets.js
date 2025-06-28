@@ -20,7 +20,8 @@ function configureSocketIo(app) {
         getUsersByRoom
     } = require('../controllers/roomController');
 
-    const { getRoomById, setTopic } = require('../models/roomModel');
+    const { getRoomById, setTopic, stopAcceptingNewUsers } = require('../models/roomModel');
+    const { getUserBySocketId } = require('../models/userModel');
 
     // Socket event hook
     io.on('connection', socket => {
@@ -46,6 +47,11 @@ function configureSocketIo(app) {
             if (!room) {
                 return socket.emit('socketError', { message: 'room not found' });
             }
+            usersDict = JSON.parse(room.users)
+            if (Object.keys(usersDict).length <= 1) {
+                return socket.emit('tooFewUsersError', { message: 'You need at least 2 people to play.' });
+            }
+            stopAcceptingNewUsers(roomId);
             assignCards(roomId);
             io.to(roomId).emit('startGame', { roomId });   // broadcast
         });
@@ -85,7 +91,26 @@ function configureSocketIo(app) {
         /* cleanup */
         socket.on('disconnect', () => {
             console.log('client disconnected', socket.id);
+            const user = getUserBySocketId(socket.id);
+            if (user === undefined) return;
+            const { roomId } = user;
             deleteUserBySocketId(socket.id);
+
+            const room = getRoomById(roomId);
+            if (!room) {
+                return socket.emit('socketError', { message: 'room not found' });
+            }
+            usersDict = JSON.parse(room.users)
+
+            // Refresh current list of users and responses.
+            const { users } = getUsersByRoom(roomId);
+            io.to(roomId).emit('userJoined', { roomId, users });
+            io.to(roomId).emit('responseUpdated', getSubmittedResponses(roomId));
+            io.to(roomId).emit('cardOpened', getAllCardsAndResponses(roomId));
+
+            if (Object.keys(usersDict).length <= 1) {
+                return io.to(roomId).emit('tooFewUsersError', { message: 'You need at least 2 people to play.' });
+            }
         });
     });
 
