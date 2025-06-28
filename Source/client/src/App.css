@@ -69,18 +69,18 @@
 }
 
 .App-card {
-  /* width: 15vw; */
   height: 25vh;
   aspect-ratio: 10 / 12;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(5px + 4vmin);
+  font-size: calc(5px + 6vmin);
   background-color: #ffffff;
   box-shadow: 0px 4px 8px rgba(78, 0, 0, 0.1);
   color: #7a3c3c;
   border-radius: 8px;
+  padding: 10px;
 }
 
 .App-card-small {
@@ -125,6 +125,35 @@
   line-height: 2;
 }
 
+.App-scrollable-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 3px solid rgb(255, 255, 255);
+  padding: 10px;
+  border-radius: 8px;
+  margin: 3%;
+
+  &::-webkit-scrollbar {
+    /* スクロールバーの背景色（トラックの背景） */
+    background-color: #f0f0f000;
+  }
+
+  /* スクロールバーのサム（動く棒の部分） */
+  &::-webkit-scrollbar-thumb {
+    background-color: #ffffff85;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-button {
+    /* 上下ボタンを非表示にする */
+    display: none;
+  }
+}
+
 
 .App-response-and-card {
   display: flex;
@@ -138,7 +167,6 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
-  /* justify-content: center; */
 }
 
 .App-response {

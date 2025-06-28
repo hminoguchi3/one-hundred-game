@@ -1,14 +1,16 @@
-import logo from '../kishi.png';
+import kishi from '../kishi.png';
+import harmit from '../harmit.png';
 import '../App.css';
 
 function WebPageTemplate({ contents }) {
     return (
         <div className="App">
             <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo" />
+                <img src={kishi} className="App-logo" alt="logo" />
                 <p>
                     Hello Mizuki!
                 </p>
+                <img src={harmit} className="App-logo" alt="logo" />
             </header>
             <main className="App-main">
                 {contents}

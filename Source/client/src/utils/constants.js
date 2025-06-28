@@ -1,3 +1,8 @@
+const roomCharLimit = 15;
+const nameCharLimit = 15;
+const topicCharLimit = 30;
+const responseCharLimit = 30;
+
 const randomTopic = ["人気なアニメキャラ",
     "人気な色",
     "朝ごはんによく食べるもの",
@@ -143,4 +148,4 @@ const randomTopic = ["人気なアニメキャラ",
     "無人島に持っていくべきもの"
 ];
 
-export { randomTopic };
+export { roomCharLimit, nameCharLimit, topicCharLimit, responseCharLimit, randomTopic };

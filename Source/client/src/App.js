@@ -4,14 +4,13 @@ import EnterRoomInputForm from './components/EnterRoomInputForm';
 import Rule from './components/Rule';
 import Lobby from './components/Lobby';
 import ErrorPage from './components/ErrorPage';
-import LoadingPage from './components/LoadingPage';
 import TopicInputForm from './components/TopicInputForm';
 import WebPageTemplate from './components/WebPageTemplate';
 import ResponseInputForm from './components/ResponseInputForm';
 import OpenCard from './components/OpenCard';
 import ShowResult from './components/ShowResult';
 import { socket } from './utils/socket';
-import { randomTopic } from './utils/constants';
+import { roomCharLimit, nameCharLimit, topicCharLimit, responseCharLimit, randomTopic } from './utils/constants';
 
 function GameContents() {
   const State = {
@@ -26,7 +25,6 @@ function GameContents() {
     SHOW_RESULT: 'SHOW_RESULT'
   };
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [state, setState] = useState(State.INIT);
 
@@ -68,6 +66,14 @@ function GameContents() {
       alert("あいことばと名前を入力してください。");
       return;
     }
+    if (userId.length > nameCharLimit) {
+      alert("名前が長すぎます。");
+      return;
+    }
+    if (roomId.length > roomCharLimit) {
+      alert("あいことばが長すぎます。");
+      return;
+    }
     setError(null);
 
     try {
@@ -75,9 +81,14 @@ function GameContents() {
       socket.emit('joinRoom', { userId, roomId });
       // Tried to start with 1 user.
       socket.on('tooFewUsersError', () => {
-        alert("ゲームを始めるには二人以上必要です。");
-      }
-      );
+        alert("ゲームには二人以上必要です。");
+      });
+      socket.on('everyoneElseDisconnectedError', (payload) => {
+        console.log("Everyone else disconnected!");
+        if (payload.gameOngoing) {
+          setError({ message: "お部屋が解散されました。ブラウザを再読み込みしてください。" });
+        }
+      });
       // Game is started.
       socket.on('startGame', (payload) => {
         setState(State.ENTER_TOPIC);
@@ -129,6 +140,10 @@ function GameContents() {
       alert("お題を入力してください。");
       return;
     }
+    if (topic.length > topicCharLimit) {
+      alert("お題が長すぎます。");
+      return;
+    }
     socket.emit('setTopic', { userId, roomId, topic });
     setState(State.ENTER_RESPONSE);
   };
@@ -136,6 +151,10 @@ function GameContents() {
   const submitResponse = async () => {
     if (response === "") {
       alert("お題と数字に合うものを入力してください。");
+      return;
+    }
+    if (response.length > responseCharLimit) {
+      alert("答えが長すぎます。");
       return;
     }
     socket.emit('submitResponse', { userId, roomId, response });
@@ -163,10 +182,6 @@ function GameContents() {
   if (error) {
     return <ErrorPage
       errorMessage={error.message} />;
-  }
-
-  if (loading) {
-    return <LoadingPage />
   }
 
   function getRandomTopic() {
@@ -213,12 +228,14 @@ function GameContents() {
       return <OpenCard
         responses={submittedResponses}
         number={card}
+        topic={topic}
         openedCard={state === State.OPENED_CARD}
         onClick={openCard}
       />;
     case State.SHOW_RESULT:
       return <ShowResult
         responses={submittedResponses}
+        topic={topic}
         onClick={playAgain}
       />;
     default:
