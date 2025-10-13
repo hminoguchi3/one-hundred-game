@@ -29,7 +29,7 @@ db.exec(`                 -- SQL begins
     userId   TEXT PRIMARY KEY,       -- User name
     roomId   TEXT,       -- Room name / code
     socketId   TEXT,
-    cardNumber   TEXT,
+    cardNumber   INTEGER,
     response   TEXT,
     correct  INTEGER DEFAULT 1,   -- 1=true, 0=false
     lastActivityTime TIMESTAMP,

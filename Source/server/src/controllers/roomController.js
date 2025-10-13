@@ -74,30 +74,6 @@ exports.assignCards = (roomId) => {
   }
 };
 
-// Returns names of the users in a room.
-exports.getUserIdsByRoom = (roomId) => {
-  // Look up the room
-  const room = getRoomById(roomId);
-  if (!room) {
-    return res.status(404).json({ error: `room "${roomId}" not found` });
-  }
-
-  const userIds = getUsersByRoomId(roomId).map(user => {
-    return user.userId;
-  });
-
-  return {
-    roomId,
-    users: userIds
-  };
-};
-
-exports.setUserResponse = ({ roomId, userId, response }) => {
-  const room = getRoomById(roomId);
-  if (!room) return false;
-  setUserResponse(response, userId);
-};
-
 // Returns responses submitted so far in the specified room.
 exports.getSubmittedResponses = (roomId) => {
   const room = getRoomById(roomId);
