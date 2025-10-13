@@ -21,7 +21,7 @@ function configureSocketIo(app) {
     } = require('../controllers/roomController');
 
     const { getRoomById, setTopic, stopAcceptingNewUsers } = require('../models/roomModel');
-    const { getUserBySocketId, userDisconnected, updateLastActivityTime, cleanUpUsers, GetDisconnectedUsers } = require('../models/userModel');
+    const { getUserBySocketId, userDisconnected, updateLastActivityTime, cleanUpUsers, updateSocketId } = require('../models/userModel');
 
     // Socket event hook
     io.on('connection', socket => {
@@ -95,14 +95,24 @@ function configureSocketIo(app) {
         });
 
         socket.on('getRoomInfo', ({roomId}) => {
-            disconnectedUsers = GetDisconnectedUsers(roomId);
-            
+            // Return { roomExists, canJoinAsNewUser, disconnectedUsers }
+            socket.emit(getRoomInfo(roomId));
         });
 
         socket.on('rejoin', ({ userId, roomId }) => {
-            
-            resetRoom(roomId);
-            io.to(roomId).emit('playAgain', {});  // ??
+            updateSocketId({userId, socketId: socket.id, roomId});
+
+            const room = getRoomById(roomId);
+            if (!room) {
+                return socket.emit('socketError', { message: 'room not found' });
+            }
+            usersDict = JSON.parse(room.users)
+
+            // Refresh current list of users and responses.
+            const { users } = getUsersByRoom(roomId);
+            io.to(roomId).emit('userJoined', { roomId, users });
+            io.to(roomId).emit('responseUpdated', getSubmittedResponses(roomId));
+            io.to(roomId).emit('cardOpened', getAllCardsAndResponses(roomId));
         });
 
         /* cleanup */
@@ -112,8 +122,6 @@ function configureSocketIo(app) {
             if (user === undefined) return;
             const { roomId } = user;
             userDisconnected(socket.id);
-            // TODO: Do not delete user immediately.
-            deleteUserBySocketId(socket.id);
 
             const room = getRoomById(roomId);
             if (!room) {

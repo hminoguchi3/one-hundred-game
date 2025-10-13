@@ -2,10 +2,7 @@ import './App.css';
 import React, { useEffect, useState } from 'react';
 import EnterRoomInputForm from './components/EnterRoomInputForm';
 import EnterNameInputForm from './components/EnterNameInputForm';
-<<<<<<< HEAD
 import RejoinInputForm from './components/RejoinInputForm';
-=======
->>>>>>> master
 import Rule from './components/Rule';
 import Lobby from './components/Lobby';
 import ErrorPage from './components/ErrorPage';

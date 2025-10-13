@@ -12,6 +12,7 @@ const {
   getUserBySocketId,
   deleteUserById,
   createUser,
+  GetDisconnectedUsers,
 } = require('../models/userModel');
 
 exports.getRoomInfo = (roomId) => {
@@ -35,44 +36,7 @@ exports.getRoomInfo = (roomId) => {
   return {
     roomExists: true,
     canJoinAsNewUser: false,
-    disconnectedUsers: []
-  }
-
-  /* ── CREATE ───────────────────────────────────────────────────────── */
-  if (!room) {
-    let userInfoDict = {};
-    userInfoDict[userId] = { socketId };
-    room = {
-      roomId,
-      gameType: 'defaultGame',
-      stage: 'lobby',
-
-      users: JSON.stringify(userInfoDict),
-
-      topic: '',
-      acceptingNewUsers: 1               // true
-    };
-    createRoom(room);
-
-    /* ── JOIN EXISTING ────────────────────────────────────────────────── */
-  } else {
-    if (!room.acceptingNewUsers)          // 0 or 1 from DB
-      throw new Error('This room is hosting ongoing game - no longer accepting new users.');
-
-    if (room.users.size > 10)
-      throw new Error(`Too many users in room! Cannot join.`);
-
-    const usersDict = JSON.parse(room.users);
-
-    if (userId in usersDict)
-      throw new Error(`userId "${userId}" is already in the room`);
-
-    usersDict[userId] = { socketId };
-
-    updateUsers({
-      roomId,
-      users: JSON.stringify(usersDict),
-    });
+    disconnectedUsers: GetDisconnectedUsers(roomId)
   }
 };
 

@@ -65,4 +65,4 @@ exports.cleanUpUsers = () => stmtCleanUpUsers.run();
 exports.GetDisconnectedUsers = roomId => stmtGetDisconnectedUsers.run(roomId);
 
 // Delete user data for inactive / disconnected users.
-exports.updateSocketId = (userId, socketId, roomId) => stmtUpdateSocketId.run();
+exports.updateSocketId = (userId, socketId, roomId) => stmtUpdateSocketId.run({userId, socketId, roomId});
