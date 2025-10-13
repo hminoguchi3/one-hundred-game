@@ -1,6 +1,8 @@
 import './App.css';
 import React, { useEffect, useState } from 'react';
 import EnterRoomInputForm from './components/EnterRoomInputForm';
+import EnterNameInputForm from './components/EnterNameInputForm';
+import RejoinInputForm from './components/RejoinInputForm';
 import Rule from './components/Rule';
 import Lobby from './components/Lobby';
 import ErrorPage from './components/ErrorPage';
@@ -15,6 +17,8 @@ import { roomCharLimit, nameCharLimit, topicCharLimit, responseCharLimit, random
 function GameContents() {
   const State = {
     INIT: 'INIT',
+    ENTER_NAME: 'ENTER_NAME',
+    REJOIN: 'REJOIN',
     SHOW_RULE: 'SHOW_RULE',
     LOBBY: 'LOBBY',
     ENTER_TOPIC: 'ENTER_TOPIC',
@@ -62,12 +66,8 @@ function GameContents() {
 
   // Called when entering a room.
   const accessRoom = async () => {
-    if (userId === "" || roomId === "") {
+    if (roomId === "") {
       alert("あいことばと名前を入力してください。");
-      return;
-    }
-    if (userId.length > nameCharLimit) {
-      alert("名前が長すぎます。");
       return;
     }
     if (roomId.length > roomCharLimit) {
@@ -75,10 +75,12 @@ function GameContents() {
       return;
     }
     setError(null);
+    socket.emit('getRoomInfo', { roomId });
+  };
 
+  const SetUpSocket = async () => {
     try {
       resetStatesForNewGame();
-      socket.emit('joinRoom', { userId, roomId });
       // Tried to start with 1 user.
       socket.on('tooFewUsersError', () => {
         alert("ゲームには二人以上必要です。");
@@ -129,6 +131,21 @@ function GameContents() {
     } catch (error) {
       setError(error);
     }
+  }
+
+  // Called after name input received.
+  const nameInputReceived = async () => {
+    if (userId === "") {
+      alert("名前を入力してください。");
+      return;
+    }
+    if (userId.length > nameCharLimit) {
+      alert("名前が長すぎます。");
+      return;
+    }
+    setError(null);
+    resetStatesForNewGame();
+    socket.emit('joinRoom', { userId, roomId });
   };
 
   const startGame = async () => {
@@ -195,9 +212,20 @@ function GameContents() {
         roomId={roomId}
         userId={userId}
         roomIdSetter={setRoomId}
-        userIdSetter={setUserId}
         onSubmit={accessRoom}
         showRule={() => setState(State.SHOW_RULE)} />;
+    case State.ENTER_NAME:
+      return <EnterNameInputForm
+        userId={userId}
+        userIdSetter={setUserId}
+        onSubmit={accessRoom} />;
+    // case State.REJOIN:
+    //   return <RejoinInputForm
+    //     roomId={roomId}
+    //     userId={userId}
+    //     roomIdSetter={setRoomId}
+    //     onSubmit={accessRoom}
+    //     showRule={() => setState(State.SHOW_RULE)} />;
     case State.SHOW_RULE:
       return <Rule
         onClose={() => setState(State.INIT)} />;

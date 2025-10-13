@@ -27,6 +27,20 @@ function configureSocketIo(app) {
     io.on('connection', socket => {
         console.log('client connected', socket.id);
 
+        /* Join a room (client emits: { roomId }) */
+        socket.on('getRoomInfo', ({ roomId }) => {
+            socket.join(roomId);
+            try {
+                joinOrCreateRoom(roomId, userId, socket.id);
+                // Send the current list of users to everyone in the room.
+                const { users } = getUsersByRoom(roomId);
+                socket.emit('userJoined', { roomId, users });
+                socket.to(roomId).emit('userJoined', { roomId, users });
+            } catch (error) {
+                socket.emit('socketError', { message: error.message });
+            }
+        });
+
         /* join a room (client emits: { roomId, userId }) */
         socket.on('joinRoom', ({ roomId, userId }) => {
             socket.join(roomId);
