@@ -21,11 +21,17 @@ function configureSocketIo(app) {
     } = require('../controllers/roomController');
 
     const { getRoomById, setTopic, stopAcceptingNewUsers } = require('../models/roomModel');
-    const { getUserBySocketId } = require('../models/userModel');
+    const { getUserBySocketId, userDisconnected, updateLastActivityTime, cleanUpUsers } = require('../models/userModel');
 
     // Socket event hook
     io.on('connection', socket => {
         console.log('client connected', socket.id);
+        cleanUpUsers();
+
+        socket.onAny(() => {
+            console.log(`Updated last activity time for socket ${socket.id}`);
+            updateLastActivityTime(socket.id)
+        });
 
         /* join a room (client emits: { roomId, userId }) */
         socket.on('joinRoom', ({ roomId, userId }) => {
@@ -94,6 +100,8 @@ function configureSocketIo(app) {
             const user = getUserBySocketId(socket.id);
             if (user === undefined) return;
             const { roomId } = user;
+            userDisconnected(socket.id);
+            // TODO: Do not delete user immediately.
             deleteUserBySocketId(socket.id);
 
             const room = getRoomById(roomId);
