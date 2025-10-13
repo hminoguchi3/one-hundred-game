@@ -21,24 +21,16 @@ function configureSocketIo(app) {
     } = require('../controllers/roomController');
 
     const { getRoomById, setTopic, stopAcceptingNewUsers } = require('../models/roomModel');
-    const { getUserBySocketId } = require('../models/userModel');
+    const { getUserBySocketId, userDisconnected, updateLastActivityTime, cleanUpUsers, GetDisconnectedUsers } = require('../models/userModel');
 
     // Socket event hook
     io.on('connection', socket => {
         console.log('client connected', socket.id);
+        cleanUpUsers();
 
-        /* Join a room (client emits: { roomId }) */
-        socket.on('getRoomInfo', ({ roomId }) => {
-            socket.join(roomId);
-            try {
-                joinOrCreateRoom(roomId, userId, socket.id);
-                // Send the current list of users to everyone in the room.
-                const { users } = getUsersByRoom(roomId);
-                socket.emit('userJoined', { roomId, users });
-                socket.to(roomId).emit('userJoined', { roomId, users });
-            } catch (error) {
-                socket.emit('socketError', { message: error.message });
-            }
+        socket.onAny(() => {
+            console.log(`Updated last activity time for socket ${socket.id}`);
+            updateLastActivityTime(socket.id)
         });
 
         /* join a room (client emits: { roomId, userId }) */
@@ -102,12 +94,25 @@ function configureSocketIo(app) {
             io.to(roomId).emit('playAgain', {});
         });
 
+        socket.on('getRoomInfo', ({roomId}) => {
+            disconnectedUsers = GetDisconnectedUsers(roomId);
+            
+        });
+
+        socket.on('rejoin', ({ userId, roomId }) => {
+            
+            resetRoom(roomId);
+            io.to(roomId).emit('playAgain', {});  // ??
+        });
+
         /* cleanup */
         socket.on('disconnect', () => {
             console.log('client disconnected', socket.id);
             const user = getUserBySocketId(socket.id);
             if (user === undefined) return;
             const { roomId } = user;
+            userDisconnected(socket.id);
+            // TODO: Do not delete user immediately.
             deleteUserBySocketId(socket.id);
 
             const room = getRoomById(roomId);
