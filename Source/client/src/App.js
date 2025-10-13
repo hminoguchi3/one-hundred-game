@@ -1,6 +1,7 @@
 import './App.css';
 import React, { useEffect, useState } from 'react';
 import EnterRoomInputForm from './components/EnterRoomInputForm';
+import EnterNameInputForm from './components/EnterNameInputForm';
 import Rule from './components/Rule';
 import Lobby from './components/Lobby';
 import ErrorPage from './components/ErrorPage';
@@ -16,6 +17,7 @@ function GameContents() {
   const State = {
     INIT: 'INIT',
     SHOW_RULE: 'SHOW_RULE',
+    ENTER_NAME: 'ENTER_NAME',
     LOBBY: 'LOBBY',
     ENTER_TOPIC: 'ENTER_TOPIC',
     ENTER_RESPONSE: 'ENTER_RESPONSE',
@@ -38,47 +40,20 @@ function GameContents() {
   const [usersInRoom, setUsersInRoom] = useState([]);
   const [submittedResponses, setSubmittedResponses] = useState([]);
 
-  // To be called initially, only once.
-  useEffect(() => {
-    socket.connect();
-    socket.on('socketError', (payload) => {
-      setError(payload);
-    });
-
-    // Listen for updates in the current room.
-    // New user joined.
-    socket.on('userJoined', (payload) => {
-      console.log('userJoined: ', payload);
-      setUsersInRoom(payload.users);
-    }
-    );
-
-    return () => {
-      // To be called when AccessRoom obj is no longer used.
-      socket.disconnect();
-    }
-  }, []
-  )
-
-  // Called when entering a room.
-  const accessRoom = async () => {
-    if (userId === "" || roomId === "") {
-      alert("あいことばと名前を入力してください。");
-      return;
-    }
-    if (userId.length > nameCharLimit) {
-      alert("名前が長すぎます。");
-      return;
-    }
-    if (roomId.length > roomCharLimit) {
-      alert("あいことばが長すぎます。");
-      return;
-    }
-    setError(null);
-
+  const setUpSockets = () => {
     try {
-      resetStatesForNewGame();
-      socket.emit('joinRoom', { userId, roomId });
+      socket.on('socketError', (payload) => {
+        setError(payload);
+      });
+
+      // Listen for updates in the current room.
+      // New user joined.
+      socket.on('userJoined', (payload) => {
+        console.log('userJoined: ', payload);
+        setUsersInRoom(payload.users);
+      }
+      );
+
       // Tried to start with 1 user.
       socket.on('tooFewUsersError', () => {
         alert("ゲームには二人以上必要です。");
@@ -129,6 +104,47 @@ function GameContents() {
     } catch (error) {
       setError(error);
     }
+  }
+
+  // To be called initially, only once.
+  useEffect(() => {
+    socket.connect();
+
+    return () => {
+      // To be called when AccessRoom obj is no longer used.
+      socket.disconnect();
+    }
+  }, []
+  )
+
+  // Called when entering a room.
+  const accessRoom = async () => {
+    setUpSockets();
+    if (roomId === "") {
+      alert("あいことばを入力してください。");
+      return;
+    }
+    if (roomId.length > roomCharLimit) {
+      alert("あいことばが長すぎます。");
+      return;
+    }
+    setError(null);
+    setState(State.ENTER_NAME);
+  };
+
+  // Called after entering player name.
+  const enterName = async () => {
+    if (userId === "") {
+      alert("名前を入力してください。");
+      return;
+    }
+    if (userId.length > nameCharLimit) {
+      alert("名前が長すぎます。");
+      return;
+    }
+    setError(null);
+    resetStatesForNewGame();
+    socket.emit('joinRoom', { userId, roomId });
   };
 
   const startGame = async () => {
@@ -193,11 +209,14 @@ function GameContents() {
     case State.INIT:
       return <EnterRoomInputForm
         roomId={roomId}
-        userId={userId}
         roomIdSetter={setRoomId}
-        userIdSetter={setUserId}
         onSubmit={accessRoom}
         showRule={() => setState(State.SHOW_RULE)} />;
+    case State.ENTER_NAME:
+      return <EnterNameInputForm
+        userId={userId}
+        userIdSetter={setUserId}
+        onSubmit={enterName} />;
     case State.SHOW_RULE:
       return <Rule
         onClose={() => setState(State.INIT)} />;
