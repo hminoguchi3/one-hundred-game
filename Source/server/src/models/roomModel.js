@@ -9,11 +9,9 @@ const stmtDelete = db.prepare(`DELETE FROM rooms WHERE roomId = ?`);
 /* INSERT now includes the four new columns */
 const stmtInsert = db.prepare(`
   INSERT INTO rooms
-    (roomId, gameType, stage,
-     users, topic, acceptingNewUsers)
+    (roomId, gameType, stage, topic, acceptingNewUsers)
   VALUES
-    (@roomId, @gameType, @stage,
-     @users, @topic, @acceptingNewUsers)
+    (@roomId, @gameType, @stage, @topic, @acceptingNewUsers)
 `);
 
 const stmtStopAcceptingNewUsers = db.prepare(`
@@ -28,15 +26,15 @@ const stmtAccepNewUsers = db.prepare(`
   WHERE roomId = ?
 `);
 
-const stmtUpdateUsers = db.prepare(`
-  UPDATE rooms SET
-    users     = @users
-  WHERE roomId = @roomId
-`);
-
 const stmtUpdateTopic = db.prepare(`
   UPDATE rooms SET
     topic     = @topic
+  WHERE roomId = @roomId
+`);
+
+const stmtUpdateStage = db.prepare(`
+  UPDATE rooms SET
+    topic     = @stage
   WHERE roomId = @roomId
 `);
 
@@ -49,12 +47,11 @@ exports.deleteRoomById = roomId => stmtDelete.run(roomId);
 // Insert a brand-new room (called once on creation)
 exports.createRoom = roomObj => stmtInsert.run(roomObj);
 
-// Replace *all* array columns at once
-exports.updateUsers = payload => stmtUpdateUsers.run(payload);
-
 exports.acceptNewUsers = roomId => stmtAccepNewUsers.run(roomId);
+
 exports.stopAcceptingNewUsers = roomId => stmtStopAcceptingNewUsers.run(roomId);
 
 // Set/overwrite the single topic string
-exports.setTopic = ({ roomId, topic }) =>
-  stmtUpdateTopic.run({ roomId, topic });
+exports.setTopic = ({ roomId, topic }) => stmtUpdateTopic.run({ roomId, topic });
+
+exports.setStage = ({ roomId, stage }) => stmtUpdateStage.run({ roomId, stage });

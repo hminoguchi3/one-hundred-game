@@ -11,17 +11,15 @@ function configureSocketIo(app) {
     const {
         joinOrCreateRoom,
         assignCards,
-        setUserResponse,
         getSubmittedResponses,
         getAllCardsAndResponses,
         openCard,
         resetRoom,
         deleteUserBySocketId,
-        getUsersByRoom
     } = require('../controllers/roomController');
 
     const { getRoomById, setTopic, stopAcceptingNewUsers } = require('../models/roomModel');
-    const { getUserBySocketId, userDisconnected, updateLastActivityTime, cleanUpUsers } = require('../models/userModel');
+    const { getUserBySocketId, userDisconnected, updateLastActivityTime, cleanUpUsers, getUsersByRoomId, setUserResponse } = require('../models/userModel');
 
     // Socket event hook
     io.on('connection', socket => {
@@ -40,7 +38,7 @@ function configureSocketIo(app) {
             try {
                 joinOrCreateRoom(roomId, userId, socket.id);
                 // Send the current list of users to everyone in the room.
-                const { users } = getUsersByRoom(roomId);
+                const users = getUsersByRoomId(roomId).map(user => user.userId)
                 socket.emit('userJoined', { roomId, users });
                 socket.to(roomId).emit('userJoined', { roomId, users });
             } catch (error) {
@@ -53,8 +51,8 @@ function configureSocketIo(app) {
             if (!room) {
                 return socket.emit('socketError', { message: 'room not found' });
             }
-            usersDict = JSON.parse(room.users)
-            if (Object.keys(usersDict).length <= 1) {
+            const users = getUsersByRoomId(roomId)
+            if (users.length <= 1) {
                 return socket.emit('tooFewUsersError', { message: 'You need at least 2 people to play.' });
             }
             stopAcceptingNewUsers(roomId);
@@ -69,17 +67,16 @@ function configureSocketIo(app) {
                 return socket.emit('socketError', { message: 'room not found' });
             }
             setTopic({ roomId, topic });            // write to DB
-            const usersDict = JSON.parse(room.users);
+            const users = getUsersByRoomId(roomId);
             // Send cards to all users.
-            for (const receiverUserId in usersDict) {
-                const userInfo = usersDict[receiverUserId];
-                io.to(userInfo.socketId).emit('topicSubmitted', { topicGivenUserId: userId, topic, card: userInfo.card });
+            for (const user of users) {
+                io.to(user.socketId).emit('topicSubmitted', { topicGivenUserId: userId, topic, card: user.cardNumber });
             }
         });
 
         // Called when a user submitted a response.
         socket.on('submitResponse', ({ roomId, userId, response }) => {
-            setUserResponse({ roomId, userId, response }); // DB update
+            setUserResponse(response, userId); // DB update
             const { allResponseSubmitted, responses } = getSubmittedResponses(roomId);
             io.to(roomId).emit('responseUpdated', { allResponseSubmitted, responses });
         });
@@ -108,15 +105,14 @@ function configureSocketIo(app) {
             if (!room) {
                 return socket.emit('socketError', { message: 'room not found' });
             }
-            usersDict = JSON.parse(room.users)
 
             // Refresh current list of users and responses.
-            const { users } = getUsersByRoom(roomId);
+            const users = getUsersByRoomId(roomId).map(user => user.userId)
             io.to(roomId).emit('userJoined', { roomId, users });
             io.to(roomId).emit('responseUpdated', getSubmittedResponses(roomId));
             io.to(roomId).emit('cardOpened', getAllCardsAndResponses(roomId));
 
-            if (Object.keys(usersDict).length <= 1) {
+            if (users.length <= 1) {
                 const acceptingNewUsers = room.acceptingNewUsers;
                 return io.to(roomId).emit(
                     'everyoneElseDisconnectedError',
