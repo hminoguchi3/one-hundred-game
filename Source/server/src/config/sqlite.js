@@ -29,7 +29,9 @@ db.exec(`                 -- SQL begins
   CREATE TABLE IF NOT EXISTS users (
     userId   TEXT PRIMARY KEY,       -- User name
     roomId   TEXT,       -- Room name / code
-    socketId   TEXT
+    socketId   TEXT,
+    lastActivityTime TIMESTAMP,
+    disconnected  INTEGER DEFAULT 1   -- 1=true, 0=false
   )
 `);
 
