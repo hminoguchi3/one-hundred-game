@@ -18,8 +18,7 @@ db.exec(`                 -- SQL begins
   CREATE TABLE IF NOT EXISTS rooms (
     roomId   TEXT PRIMARY KEY,       -- Room name / code
     gameType TEXT DEFAULT 'defaultGame',
-    stage    TEXT DEFAULT 'lobby',   -- lobby → playing → finished
-    users    TEXT,                   -- JSON array of user IDs
+    stage    TEXT DEFAULT 'lobby',   -- lobby → waiting-for-topic → waiting-for-answer → opening-card → result
     topic              TEXT DEFAULT '',
     acceptingNewUsers  INTEGER DEFAULT 1   -- 1=true, 0=false
   )
@@ -30,8 +29,12 @@ db.exec(`                 -- SQL begins
     userId   TEXT PRIMARY KEY,       -- User name
     roomId   TEXT,       -- Room name / code
     socketId   TEXT,
+    cardNumber   TEXT,
+    response   TEXT,
+    correct  INTEGER DEFAULT 1,   -- 1=true, 0=false
     lastActivityTime TIMESTAMP,
-    disconnected  INTEGER DEFAULT 1   -- 1=true, 0=false
+    disconnected  INTEGER DEFAULT 1,   -- 1=true, 0=false
+    cardOpened  INTEGER DEFAULT 1   -- 1=true, 0=false
   )
 `);
 

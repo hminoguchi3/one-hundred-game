@@ -3,7 +3,6 @@ const {
   getRoomById,
   deleteRoomById,
   createRoom,
-  updateUsers,
   setTopic,
   acceptNewUsers,
 } = require('../models/roomModel');
@@ -12,6 +11,12 @@ const {
   getUserBySocketId,
   deleteUserById,
   createUser,
+  getUsersByRoomId,
+  assignCardToUser,
+  setUserResponse,
+  openCard,
+  getCardByUserId,
+  resetUsersInRoom,
 } = require('../models/userModel');
 
 exports.joinOrCreateRoom = (roomId, userId, socketId) => {
@@ -19,18 +24,13 @@ exports.joinOrCreateRoom = (roomId, userId, socketId) => {
     throw new Error('roomId, userId, and socketId are required.');
 
   let room = getRoomById(roomId);
-  createUser(userId, socketId, roomId);
 
   /* ── CREATE ───────────────────────────────────────────────────────── */
   if (!room) {
-    let userInfoDict = {};
-    userInfoDict[userId] = { socketId };
     room = {
       roomId,
       gameType: 'defaultGame',
       stage: 'lobby',
-
-      users: JSON.stringify(userInfoDict),
 
       topic: '',
       acceptingNewUsers: 1               // true
@@ -42,79 +42,60 @@ exports.joinOrCreateRoom = (roomId, userId, socketId) => {
     if (!room.acceptingNewUsers)          // 0 or 1 from DB
       throw new Error('This room is hosting ongoing game - no longer accepting new users.');
 
-    if (room.users.size > 10)
+    const users = getUsersByRoomId(roomId);
+    if (users.length >= 10)
       throw new Error(`Too many users in room! Cannot join.`);
 
-    const usersDict = JSON.parse(room.users);
-
-    if (userId in usersDict)
-      throw new Error(`userId "${userId}" is already in the room`);
-
-    usersDict[userId] = { socketId };
-
-    updateUsers({
-      roomId,
-      users: JSON.stringify(usersDict),
-    });
+    // Duplicate userId will be handled when inserting into users table because
+    // userId is a primary key.
   }
+
+  createUser(userId, socketId, roomId);
 };
 
 exports.assignCards = (roomId) => {
   if (!roomId)
     throw new Error('roomId is required.');
 
-  let room = getRoomById(roomId.trim());
-  if (!room)
-    throw new Error(`requested room ${roomId} does not exist.`);
-
-  let usersDict = JSON.parse(room.users);
+  const users = getUsersByRoomId(roomId);
 
   // Generate N distinct random numbers between 1 and 100, inclusive.
   let cardNums = new Set();
-  while (cardNums.size < Object.keys(usersDict).length) {
+  while (cardNums.size < users.length) {
     const randomNumber = Math.floor(Math.random() * 100) + 1;
     cardNums.add(randomNumber);
   }
 
   // Assign number to each user.
-  for (const userId of Object.keys(usersDict)) {
+  for (const user of users) {
     const cardNum = cardNums.values().next().value;
-    usersDict[userId].card = cardNum;
+    assignCardToUser(cardNum, user.userId);
     cardNums.delete(cardNum);
   }
-
-  // Update database.
-  updateUsers({
-    roomId,
-    users: JSON.stringify(usersDict),
-  });
 };
 
 // Returns names of the users in a room.
-exports.getUsersByRoom = (roomId) => {
+exports.getUserIdsByRoom = (roomId) => {
   // Look up the room
   const room = getRoomById(roomId);
   if (!room) {
     return res.status(404).json({ error: `room "${roomId}" not found` });
   }
 
+  const userIds = getUsersByRoomId(roomId).map(user => {
+    return user.userId;
+  });
+
   return {
     roomId,
-    users: Object.keys(JSON.parse(room.users))
+    users: userIds
   };
 };
 
 exports.setUserResponse = ({ roomId, userId, response }) => {
   const room = getRoomById(roomId);
   if (!room) return false;
-
-  // Parse, mutate, and write back just the responses array
-  const usersDict = JSON.parse(room.users);
-  usersDict[userId].response = response;
-  updateUsers({
-    roomId,
-    users: JSON.stringify(usersDict),
-  });
+  setUserResponse(response, userId);
 };
 
 // Returns responses submitted so far in the specified room.
@@ -124,17 +105,17 @@ exports.getSubmittedResponses = (roomId) => {
     return res.status(404).json({ error: `room "${roomId}" not found` });
   }
 
-  const usersDict = JSON.parse(room.users);
+  const users = getUsersByRoomId(roomId)
   let responses = [];
 
-  for (const userId of Object.keys(usersDict)) {
-    if (usersDict[userId].response) {
-      responses.push({ userId, response: usersDict[userId].response });
+  for (const user of users) {
+    if (user.response) {
+      responses.push({ userId: user.userId, response: user.response });
     }
   }
 
   return {
-    allResponseSubmitted: Object.keys(usersDict).length == responses.length,
+    allResponseSubmitted: users.length == responses.length,
     responses
   };
 };
@@ -145,20 +126,19 @@ exports.getAllCardsAndResponses = (roomId) => {
     return res.status(404).json({ error: `room "${roomId}" not found` });
   }
 
-  const usersDict = JSON.parse(room.users);
   let responses = [];
   let allCardsOpened = true;
 
-  for (const userId of Object.keys(usersDict)) {
-    if (usersDict[userId].response) {
+  for (const user of getUsersByRoomId(roomId)) {
+    if (user.response) {
       responses.push({
-        userId,
-        response: usersDict[userId].response,
-        card: usersDict[userId].cardOpened ? usersDict[userId].card : undefined,
-        correct: usersDict[userId].correct
+        userId: user.userId,
+        response: user.response,
+        card: user.cardOpened ? user.cardNumber : undefined,
+        correct: user.correct
       });
     }
-    if (!usersDict[userId].cardOpened) {
+    if (!user.cardOpened) {
       allCardsOpened = false;
     }
   }
@@ -172,26 +152,20 @@ exports.openCard = (roomId, cardOpenedUserId) => {
     return res.status(404).json({ error: `room "${roomId}" not found` });
   }
 
-  const usersDict = JSON.parse(room.users);
   let openedCardIsMinimum = true;
+  const openedCard = getCardByUserId(cardOpenedUserId).cardNumber;
 
-  for (const userId of Object.keys(usersDict)) {
-    if (userId == cardOpenedUserId) continue;
-    if (usersDict[userId].cardOpened) continue;
-    if (usersDict[userId].card < usersDict[cardOpenedUserId].card) {
-      // Another user has a card with lower value. The user should not have opened the card.
+  for (const user of getUsersByRoomId(roomId)) {
+    if (user.userId == cardOpenedUserId) continue;
+    if (user.cardOpened) continue;
+    if (user.cardNumber < openedCard) {
       openedCardIsMinimum = false;
+      // Another user has a card with lower value. The user should not have opened the card.
       break;
     }
   }
 
-  usersDict[cardOpenedUserId].correct = openedCardIsMinimum;
-  usersDict[cardOpenedUserId].cardOpened = true;
-
-  updateUsers({
-    roomId,
-    users: JSON.stringify(usersDict),
-  });
+  openCard(cardOpenedUserId, openedCardIsMinimum ? 1 : 0);
 };
 
 exports.resetRoom = (roomId) => {
@@ -199,22 +173,7 @@ exports.resetRoom = (roomId) => {
   if (!room) {
     return res.status(404).json({ error: `room "${roomId}" not found` });
   }
-  const usersDict = JSON.parse(room.users);
-  let newUsersDict = {};
-  for (const userId of Object.keys(usersDict)) {
-    newUsersDict[userId] = {
-      socketId: usersDict[userId].socketId,
-      card: undefined,
-      response: undefined,
-      cardOpened: undefined,
-      correct: undefined
-    };
-  }
-
-  updateUsers({
-    roomId,
-    users: JSON.stringify(newUsersDict),
-  });
+  resetUsersInRoom(roomId);
   setTopic({ roomId, topic: undefined });
   acceptNewUsers(roomId);
 };
@@ -226,17 +185,8 @@ exports.deleteUserBySocketId = (socketId) => {
 
   deleteUserById(userId);
 
-  const room = getRoomById(roomId);
-  const usersDict = JSON.parse(room.users);
-  delete usersDict[userId];
-
-  if (Object.keys(usersDict).length <= 0) {
+  if (getUsersByRoomId(roomId).length <= 0) {
     // No more users left in the room.
     deleteRoomById(roomId);
-  } else {
-    updateUsers({
-      roomId,
-      users: JSON.stringify(usersDict),
-    });
   }
 };
